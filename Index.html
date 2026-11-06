@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<base target="_top">
+<style>
+:root{font:16px/1.55 system-ui,sans-serif;color:#182d28;background:#eef5f1}
+body{margin:0} main{max-width:1100px;margin:auto;padding:24px}
+header{background:#123b31;color:white;padding:26px 28px;border-radius:18px;margin-bottom:16px}
+header p,h1{margin:0} header p{color:#bce5d4} h1{font-size:clamp(24px,5vw,34px)}
+nav,.row{display:flex;flex-wrap:wrap;align-items:center;gap:10px} nav{margin-bottom:14px}
+button,input{font:inherit;border-radius:8px;border:1px solid #9cb8ad;padding:8px 12px}
+button{cursor:pointer;background:#e9f4ed;color:#163b2e} button:hover{background:#c9ead8}
+button[aria-selected=true],.primary{background:#176044;color:white;border-color:#176044}
+button[aria-selected=true]:hover,.primary:hover{background:#114b35}
+button:disabled{cursor:wait;opacity:.55} input{background:white;color:inherit;max-width:100%;box-sizing:border-box}
+input[type=checkbox]{margin-right:6px} .search{flex:1;min-width:min(260px,100%)}
+section,details,.card{border:1px solid #d3e3db;background:white;border-radius:12px;padding:16px}
+details{margin-top:14px} summary{cursor:pointer;font-weight:700}
+.card{margin-top:10px;padding:13px} .card h3{margin:0 0 4px}
+.muted{color:#496158} .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}
+label{display:block} label input:not([type=checkbox]){width:100%}
+#status{margin:0 0 12px;padding:9px 12px;border-radius:8px;background:#dcefe5;white-space:pre-wrap}
+#status.error{background:#fce7e4;color:#781d17} [hidden]{display:none!important}
+.workTabs{margin:14px 0}
+.dashboard{display:grid;gap:12px}.dashboard h2{margin:0 0 10px}
+.table-scroll{overflow-x:auto}
+.task-table{width:100%;border-collapse:collapse}
+.task-table th,.task-table td{text-align:left;padding:8px;border-bottom:1px solid #d3e3db}
+.task-table th{background:#e9f4ed}
+.print-toolbar{padding:12px}
+@page{size:A4 landscape;margin:12mm}
+@media print{
+  body{background:white;color:black;font:11pt/1.35 serif}
+  main,.print-toolbar{display:none}
+  .print-copy + .print-copy{break-before:page}
+  .print-copy h1{text-align:center;font-size:18pt}
+  .print-date{text-align:right}
+  .print-copy table{width:100%;border-collapse:collapse}
+  .print-copy th,.print-copy td{border:1px solid black;padding:4px;text-align:center;overflow-wrap:anywhere}
+  .print-copy tr{break-inside:avoid}
+  .print-signatures{display:flex;flex-wrap:wrap;gap:20px;margin-top:20px}
+}
+</style>
+</head>
+<body>
+<main>
+<header><p>嘉義縣立永慶高級中學</p><h1>財產報廢與轉移</h1></header>
+<nav aria-label="系統頁籤">
+  <button type="button" data-panel="lookup" aria-selected="false">查詢財產</button>
+  <button type="button" data-panel="operations" aria-selected="false">財產報廢與轉移</button>
+  <button type="button" data-panel="listPanel" aria-selected="true">作業清單</button>
+  <button type="button" data-panel="importPanel" aria-selected="false">匯入財產盤點 Excel</button>
+  <button type="button" data-panel="adminPanel" aria-selected="false">系統管理</button>
+</nav>
+<p id="status" role="status" aria-live="polite" hidden></p>
+<section id="lookup" hidden>
+  <h2>查詢財產</h2>
+  <div id="matchContext" hidden></div>
+  <form id="searchForm" class="row">
+    <input id="query" class="search" aria-label="財產編號或保管人" placeholder="例如 3140101-03 3000242 或保管人" required>
+    <button class="primary">查詢</button>
+  </form>
+  <p class="row">
+    <button type="button" id="queueScrap">登記報廢</button>
+    <button type="button" id="queueMove">登記轉移</button>
+  </p>
+  <div id="results"></div>
+</section>
+<div id="operations" hidden>
+<nav aria-label="報廢與轉移作業" class="workTabs">
+  <button type="button" data-tab="報廢" aria-selected="false">報廢登記與申請</button>
+  <button type="button" data-tab="轉移" aria-selected="false">轉移登記與申請</button>
+</nav>
+<section id="work" hidden>
+  <h2 id="workTitle"></h2>
+  <form id="registerForm" class="row">
+    <label><span id="taskNumberLabel"></span><input id="taskNumber" maxlength="120"></label>
+    <label><span id="taskPersonLabel"></span><input id="taskPerson" maxlength="120"></label>
+    <button class="primary">新增待辦</button>
+  </form>
+  <p id="taskHint" class="muted"></p>
+  <h2>本次申請明細</h2>
+  <form id="cartForm">
+    <div id="cart"></div>
+    <button id="submitCase" class="primary">建立申請單</button>
+  </form>
+</section>
+</div>
+<div id="listPanel">
+<div class="row"><h2>作業清單</h2><button id="reload" type="button">重新整理</button></div>
+<nav aria-label="作業清單頁籤">
+  <button type="button" data-list="pendingScrap" aria-selected="true" aria-controls="panel-pendingScrap">待報廢財產</button>
+  <button type="button" data-list="preparedScrap" aria-selected="false" aria-controls="panel-preparedScrap">已準備報廢</button>
+  <button type="button" data-list="pendingMove" aria-selected="false" aria-controls="panel-pendingMove">待轉移財產</button>
+  <button type="button" data-list="preparedMove" aria-selected="false" aria-controls="panel-preparedMove">已準備轉移</button>
+</nav>
+<div class="dashboard">
+  <section id="panel-pendingScrap"><h2>待報廢財產</h2><div id="pendingScrap"></div></section>
+  <section id="panel-preparedScrap" hidden><h2>已準備報廢</h2><div id="preparedScrap"></div></section>
+  <section id="panel-pendingMove" hidden><h2>待轉移財產</h2><div id="pendingMove"></div></section>
+  <section id="panel-preparedMove" hidden><h2>已準備轉移</h2><div id="preparedMove"></div></section>
+</div>
+<details><summary>歷史申請單</summary><div id="caseHistory"></div></details>
+</div>
+<section id="importPanel" hidden>
+    <h2>匯入財產盤點 Excel</h2>
+    <p class="muted">讀取永慶高中清冊的 Sheet1。先預覽，再確認寫入。</p>
+    <div class="row">
+      <label>財產名稱 <input id="assetName" value="個人電腦" maxlength="80"></label>
+      <input type="file" id="source" accept=".xlsx" aria-label="選擇盤點 Excel">
+      <button id="preview" type="button">預覽匯入</button>
+      <button id="commit" class="primary" type="button" hidden>確認寫入</button>
+    </div>
+    <div id="importReport"></div>
+</section>
+<section id="adminPanel" hidden>
+  <h2>系統管理</h2>
+  <p>清除現行財產、報廢紀錄、轉移紀錄、申請單及待辦登記。保留表頭及其他工作表。此操作無法在系統內復原。</p>
+  <form id="clearForm" class="row">
+    <label>請輸入「清除全部資料」<input id="clearText" autocomplete="off" required></label>
+    <button style="background:#fce7e4;color:#781d17">清除全部資料</button>
+  </form>
+</section>
+</main>
+<script>
+'use strict';
+const byId = id => document.getElementById(id);
+const draft = {'報廢': new Map(), '轉移': new Map()};
+const limits = {'報廢': 22, '轉移': 4};
+const buttons = [...document.querySelectorAll('[data-tab]')];
+let tab = 'lookup';
+let busy = false;
+let previewed = null;
+let query = '';
+let currentPage = 0;
+let matching = null;
+
+function node(tag, text, className) {
+  const el = document.createElement(tag);
+  if (text !== undefined) el.textContent = text;
+  if (className) el.className = className;
+  return el;
+}
+
+function button(text, action) {
+  const el = node('button', text);
+  el.type = 'button';
+  el.onclick = action;
+  return el;
+}
+
+function status(message, error = false) {
+  const el = byId('status');
+  el.hidden = !message;
+  el.textContent = message;
+  el.classList.toggle('error', error);
+}
+
+function rpc(name, ...args) {
+  return new Promise((resolve, reject) => google.script.run.withSuccessHandler(resolve)
+    .withFailureHandler(reject)[name](...args));
+}
+
+async function run(action) {
+  if (busy) return;
+  busy = true;
+  document.querySelector('main').setAttribute('aria-busy', 'true');
+  const locked = [...document.querySelectorAll('button:not(:disabled), input:not(:disabled)')];
+  locked.forEach(el => el.disabled = true);
+  status('處理中…');
+  try {
+    status(await action() || '');
+  } catch (error) {
+    status(error.message || String(error), true);
+  } finally {
+    locked.forEach(el => el.disabled = false);
+    busy = false;
+    document.querySelector('main').removeAttribute('aria-busy');
+  }
+}
+
+function describe(card, label, value) {
+  if (value !== undefined && value !== '') card.append(node('div', label + '　' + value));
+}
+
+async function find(page) {
+  const result = await rpc('searchAssets', query, page);
+  currentPage = page;
+  const box = byId('results');
+  box.replaceChildren(node('p', result.total ? '找到 ' + result.total + ' 筆現行或歷史紀錄' :
+    (matching ? '系統無資料。請核對編號或改用原保管人查詢。' : '系統無資料。仍可先登記報廢或轉移，之後再比對。')));
+  for (const {kind, row, pending} of result.hits) {
+    const card = node('article', undefined, 'card');
+    card.append(node('h3', row[0] + '　' + row[1]), node('p', kind + (pending ? ' · 待辦結' : ''), 'muted'));
+    const labels = [[2,'廠牌型號'],[3,'品名補充'],[4,'單位'],[5,'數量'],[6,'殘值'],
+      [7,'累計折舊'],[8,'原始金額'],[9,'帳面價值'],[10,'購置日期'],[11,'領用日期'],
+      [12,'使用年限'],[13,'盤點已用年限'],[14,'存放地點'],[16,'保管人'],[17,'備註'],[18,'檢查情形']];
+    const grid = node('div', undefined, 'grid');
+    labels.forEach(([index,label]) => describe(grid,label,row[index]));
+    card.append(grid);
+    if (kind === '現行財產清冊' && !pending) {
+      const actions = node('p', undefined, 'row');
+      if (matching) {
+        actions.append(button('選用這筆財產', () => addItem(matching.type, row, matching)));
+      } else {
+        for (const type of ['報廢','轉移']) {
+          actions.append(button('加入' + type, () => addItem(type, row)));
+        }
+      }
+      card.append(actions);
+    } else if (kind !== '現行財產清冊') {
+      [[20,'單號'],[21,'辦結時間'],[22,'報廢原因'],[23,'移入單位'],[24,'新保管人'],
+        [25,'新地點']].forEach(([index,label]) => describe(card,label,row[index]));
+    }
+    box.append(card);
+  }
+  const pager = node('p', undefined, 'row');
+  if (page > 0) pager.append(button('上一頁', () => run(() => find(page - 1))));
+  if ((page + 1) * 25 < result.total) pager.append(button('下一頁', () => run(() => find(page + 1))));
+  box.append(pager);
+}
+
+function stageItem(type, row, task) {
+  const items = draft[type];
+  if (!items.has(row[0]) && items.size >= limits[type]) {
+    throw new Error('此表單最多 ' + limits[type] + ' 筆，請分單。');
+  }
+  if (type === '轉移' && ((task && items.size) || Array.from(items.values()).some(item => item.taskId))) {
+    throw new Error('待辦請逐筆建立申請單。請先送出或移除目前的申請明細。');
+  }
+  if (items.has(row[0]) || (task && Array.from(items.values()).some(item => item.taskId === task.id))) {
+    throw new Error('這筆財產或登記已在本次申請明細。');
+  }
+  if (!items.has(row[0])) {
+    const total = String(row[8]).replace(/,/g, '');
+    items.set(row[0], {row, code: row[0], reason: '年限已到不堪使用',
+      price: total && Number.isFinite(Number(total)) ? (Number(total) / row[5]).toFixed(2) : '',
+      total, unit: '', keeper: task && type === '轉移' ? task.person : '', location: '', keepActive: false,
+      taskId: task ? task.id : '', taskNumber: task ? task.number : ''});
+  }
+}
+
+function addItem(type, row, task) {
+  if (task) {
+    run(() => prepareAndRefresh(task, row[0]));
+    return;
+  }
+  try {
+    stageItem(type, row, task);
+    showTab(type);
+  } catch (error) {
+    status(error.message, true);
+  }
+}
+
+function inputFor(item, key, label, check = false) {
+  const field = node('label', check ? undefined : label);
+  const input = node('input');
+  if (check) {
+    input.type = 'checkbox';
+    input.checked = item[key];
+  } else {
+    input.required = true;
+    input.maxLength = 120;
+    input.value = item[key];
+    if (key === 'price' || key === 'total') input.inputMode = 'decimal';
+  }
+  input.oninput = () => { item[key] = check ? input.checked : input.value; };
+  field.append(input);
+  if (check) field.append(document.createTextNode(label));
+  return field;
+}
+
+function renderCart() {
+  const items = draft[tab];
+  const box = byId('cart');
+  box.replaceChildren();
+  if (!items.size) box.append(node('p','目前尚未加入財產。','muted'));
+  for (const [key, item] of items) {
+    const card = node('article', undefined, 'card');
+    card.append(node('h3',key + '　' + item.row[1]),
+      node('p','原保管人 ' + item.row[16] + ' ／ 原地點 ' + item.row[14] + ' ／ 數量 ' + item.row[5], 'muted'));
+    const fields = node('div', undefined, 'grid');
+    if (tab === '報廢') {
+      fields.append(inputFor(item,'reason','報廢原因'),inputFor(item,'price','單價'),inputFor(item,'total','總價'));
+      card.append(node('p','金額先依清冊原始金額帶入，送出前請依校內口徑核對。','muted'));
+    } else {
+      fields.append(inputFor(item,'unit','移入單位'),inputFor(item,'keeper','新保管人'),inputFor(item,'location','新地點'));
+    }
+    if (item.taskId) describe(card,'登記編號',item.taskNumber || '依新保管人登記');
+    card.append(fields);
+    if (tab === '轉移') card.append(inputFor(item,'keepActive','接手人也由本系統管理，轉入後列入現行清冊', true));
+    card.append(button('從本單移除', () => { items.delete(key); renderCart(); run(refreshWork); }));
+    box.append(card);
+  }
+  byId('submitCase').hidden = !items.size;
+}
+
+function saveWord(file) {
+  const bytes = Uint8Array.from(atob(file.data), ch => ch.charCodeAt(0));
+  const url = URL.createObjectURL(new Blob([bytes], {type:file.mime}));
+  const link = node('a');
+  link.href = url;
+  link.download = file.name;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+const listTabs = [...document.querySelectorAll('[data-list]')];
+const pendingResults = new Map();
+function selectList(id) {
+  for (const button of listTabs) {
+    const selected = button.dataset.list === id;
+    button.setAttribute('aria-selected', String(selected));
+    byId('panel-' + button.dataset.list).hidden = !selected;
+  }
+}
+listTabs.forEach(button => { button.onclick = () => selectList(button.dataset.list); });
+
+async function refreshWork() {
+  const dashboard = await rpc('taskDashboard');
+  const history = byId('caseHistory');
+  history.replaceChildren();
+  for (const record of dashboard.history) history.append(renderReadyCase(record));
+  if (!dashboard.history.length) history.append(node('p', '目前沒有歷史申請單。', 'muted'));
+  for (const [type, suffix] of [['報廢', 'Scrap'], ['轉移', 'Move']]) {
+    const tasks = dashboard.tasks.filter(task => task.type === type);
+    renderTaskList(byId('pending' + suffix), tasks.filter(task => !task.asset), false);
+    const prepared = byId('prepared' + suffix);
+    const preparedTasks = tasks.filter(task => task.asset);
+    renderTaskList(prepared, preparedTasks, true);
+    const cases = dashboard.ready.filter(record => record.type === type);
+    if (!preparedTasks.length && !cases.length) prepared.append(node('p', '目前沒有資料。', 'muted'));
+    cases.forEach(record => prepared.append(renderReadyCase(record)));
+  }
+}
+
+function renderTaskList(box, tasks, ready) {
+  box.replaceChildren();
+  if (!tasks.length) {
+    if (!ready) box.append(node('p', '目前沒有資料。', 'muted'));
+    return;
+  }
+  const checks = [];
+  const wrapper = node('div', undefined, 'table-scroll');
+  const table = node('table', undefined, 'task-table');
+  const header = table.createTHead().insertRow();
+  (ready ? ['完整財產編號', '財產名稱／型號', '保管資料', '操作'] :
+    ['勾選', '登記編號', '登記人員', '登記時間', '比對結果']).forEach(label => header.append(node('th', label)));
+  const body = table.createTBody();
+  for (const task of tasks) {
+    const row = body.insertRow();
+    const asset = task.asset;
+    if (!ready) {
+      const check = node('input');
+      check.type = 'checkbox';
+      check.value = task.id;
+      check.setAttribute('aria-label', '勾選 ' + (task.number || task.person));
+      checks.push(check);
+      row.insertCell().append(check);
+    }
+    const values = ready ? [asset[0], [asset[1], asset[2]].filter(Boolean).join(' ／ '),
+      [asset[16], asset[14], task.type === '轉移' && task.person ? '移入：' + task.person : ''].filter(Boolean).join(' ／ ')] :
+      [task.number || '待補編號', task.person || '待確認', task.date];
+    values.forEach(value => { row.insertCell().textContent = value; });
+    const actions = row.insertCell();
+    if (ready) {
+      const selected = Array.from(draft[task.type].values()).some(item => item.taskId === task.id);
+      if (selected) actions.textContent = '已加入本次申請';
+      else actions.append(button('加入申請單', () => {
+        try {
+          stageItem(task.type, asset, task);
+          showTab(task.type);
+          byId('cartForm').scrollIntoView({block:'nearest'});
+        } catch (error) {
+          status(error.message, true);
+        }
+      }));
+    } else {
+      const result = pendingResults.get(task.id);
+      if (result?.error) actions.textContent = result.error;
+      else if (result) renderMatchOptions(task, actions, result.matches);
+    }
+  }
+  if (!ready) {
+    const toolbar = node('div', undefined, 'row');
+    const selectAll = node('input');
+    selectAll.type = 'checkbox';
+    const label = node('label');
+    label.append(selectAll, document.createTextNode('全選本清單'));
+    const count = node('span');
+    const prepare = button('確定處理', () => runBatch('prepare', checks));
+    const abandon = button('放棄', () => runBatch('abandon', checks));
+    function updateSelection() {
+      const selected = checks.filter(check => check.checked).length;
+      selectAll.checked = selected === checks.length;
+      selectAll.indeterminate = selected > 0 && selected < checks.length;
+      count.textContent = '已勾選 ' + selected + ' 筆';
+    }
+    selectAll.onchange = () => {
+      checks.forEach(check => { check.checked = selectAll.checked; });
+      updateSelection();
+    };
+    checks.forEach(check => { check.onchange = updateSelection; });
+    updateSelection();
+    toolbar.append(label, count, prepare, abandon);
+    box.append(toolbar);
+  }
+  wrapper.append(table);
+  box.append(wrapper);
+}
+
+function runBatch(action, checks) {
+  const ids = checks.filter(check => check.checked).map(check => check.value);
+  if (!ids.length) {
+    status('請先勾選要處理的資料。', true);
+    return;
+  }
+  if (action === 'abandon' &&
+      !window.confirm('確定放棄並刪除勾選的 ' + ids.length + ' 筆待辦登記？')) return;
+  run(async () => {
+    const results = await rpc('processPendingTasks', action, ids);
+    let done = 0;
+    for (const result of results) {
+      if (result.done) {
+        done++;
+        pendingResults.delete(result.id);
+      } else {
+        pendingResults.set(result.id, result);
+      }
+    }
+    await refreshWork();
+    return (action === 'abandon' ? '已放棄 ' : '已移至「已準備」') + done + ' 筆。' +
+      (done < ids.length ? '其餘 ' + (ids.length - done) + ' 筆請查看待辦表格的比對結果。' : '');
+  });
+}
+
+async function prepareAndRefresh(task, code) {
+  const result = await rpc('prepareTask', task.id, code);
+  if (!result.asset) throw new Error('找不到所選財產，請重新查詢。');
+  pendingResults.delete(task.id);
+  matching = null;
+  byId('matchContext').hidden = true;
+  byId('matchContext').replaceChildren();
+  byId('results').replaceChildren();
+  await refreshWork();
+  selectList(task.type === '報廢' ? 'preparedScrap' : 'preparedMove');
+  selectPanel('listPanel');
+  return '已移至「已準備' + task.type + '」。';
+}
+
+function renderMatchOptions(task, actions, matches) {
+  const options = node('div', undefined, 'match-options');
+  options.append(node('p', matches.length ? '找到多筆財產，請選擇正確的一筆。' : '系統無資料，這筆仍在待辦。'));
+  for (const row of matches) {
+    const option = node('div', undefined, 'row');
+    option.append(node('span', [row[0], row[2], row[16], row[14]].filter(Boolean).join(' ／ ')),
+      button('選用', () => run(() => prepareAndRefresh(task, row[0]))));
+    options.append(option);
+  }
+  options.append(button('手動查找', () => startMatch(task)));
+  actions.append(options);
+}
+
+function startMatch(task) {
+  showTab('lookup', task);
+  query = task.number || (task.type === '報廢' ? task.person : '');
+  byId('query').value = query;
+  byId('lookup').scrollIntoView({block:'start'});
+  if (query) run(() => find(0));
+  else byId('query').focus();
+}
+
+function renderReadyCase(record) {
+    const card = node('article', undefined, 'card');
+    const prepared = record.type === '報廢';
+    card.append(node('h3',record.status + '　' + record.date),node('div',record.id,'muted'),
+      node('p',record.items.join('、')));
+    if (record.closed) describe(card,'處理時間',record.closed);
+    const actions = node('div', undefined, 'row');
+    if (record.status !== '已取消') {
+      actions.append(button('下載 Word', () => run(async () => {
+        saveWord(await rpc('downloadForm', record.id));
+        return 'Word 表單已產生。';
+      })));
+      actions.append(button('列印', () => openPrint(record.id)));
+    }
+    if (record.status === '待辦結') {
+      for (const [action, label, prompt] of [
+        ['close','完成並清除','請確認本張申請單上的各筆財產皆已辦結。確認後將歸檔並清除相關待辦。'],
+        ['cancel','取消申請單','確定取消這張待辦申請單？']
+      ]) {
+        const control = button(label, () => {
+          if (!window.confirm(prompt)) return;
+          run(async () => {
+            const result = await rpc('finishCase',record.id,action);
+            await refreshWork();
+            if (query) await find(currentPage);
+            return result + '。';
+          });
+        });
+        if (prepared && action === 'close') {
+          const printed = node('input');
+          printed.type = 'checkbox';
+          const label = node('label');
+          label.append(printed, document.createTextNode('我已印出表單並確認辦結'));
+          control.hidden = true;
+          printed.onchange = () => { control.hidden = !printed.checked; };
+          actions.append(label);
+        }
+        actions.append(control);
+      }
+    }
+    card.append(actions);
+    return card;
+}
+
+function openPrint(id) {
+  if (busy) return;
+  const popup = window.open('', '_blank');
+  if (!popup) {
+    status('瀏覽器已封鎖列印視窗。請允許彈出式視窗，或下載 Word 後列印。', true);
+    return;
+  }
+  popup.document.title = '財產表單列印';
+  popup.document.body.textContent = '正在準備列印…';
+  run(async () => {
+    try {
+      const form = await rpc('getPrintForm', id);
+      if (popup.closed) return;
+      const printDoc = popup.document;
+      printDoc.body.replaceChildren();
+      printDoc.head.append(document.querySelector('style').cloneNode(true));
+      const toolbar = node('div', undefined, 'print-toolbar');
+      toolbar.append(button('列印表單', () => popup.print()));
+      const target = node('div');
+      target.className = 'print-content';
+      renderPrint(form, target);
+      printDoc.body.append(toolbar, target);
+      popup.focus();
+      return '列印預覽已開啟。';
+    } catch (error) {
+      popup.close();
+      throw error;
+    }
+  });
+}
+
+function renderPrint(form, target) {
+  target.replaceChildren();
+  const [year, month, day] = form.formDate.split('-').map(Number);
+  for (const copy of ['第一聯', '第二聯']) {
+    const page = node('article', undefined, 'print-copy');
+    page.append(node('h1', '嘉義縣立永慶高級中學總務處' +
+      (form.move ? '財產/物品移動申請單' : '財產減損報銷單')),
+      node('p', copy + '　' + (year - 1911) + ' 年 ' + month + ' 月 ' + day + ' 日', 'print-date'));
+    const table = node('table');
+    const head = table.createTHead().insertRow();
+    form.columns.forEach(label => head.append(node('th', label)));
+    const body = table.createTBody();
+    form.values.forEach(values => {
+      const row = body.insertRow();
+      values.forEach(value => { row.insertCell().textContent = value; });
+    });
+    const signatures = node('div', undefined, 'print-signatures');
+    form.signatures.forEach(label => signatures.append(node('span', label + '　＿＿＿＿')));
+    page.append(table, signatures);
+    target.append(page);
+  }
+}
+
+function showTab(next, task = null) {
+  if (busy) return;
+  tab = next;
+  selectPanel(next === 'lookup' ? 'lookup' : 'operations');
+  matching = task;
+  const context = byId('matchContext');
+  context.hidden = !task;
+  context.replaceChildren();
+  if (task) {
+    context.append(node('p', '正在比對' + (task.type === '報廢' ? '待報廢' : '待移轉') +
+      '　' + (task.number || '請輸入財產編號或原保管人') + '　' + task.person));
+    const actions = node('p', undefined, 'row');
+    actions.append(button('返回待辦', () => {
+      showTab(task.type);
+      selectList(task.type === '報廢' ? 'pendingScrap' : 'pendingMove');
+      selectPanel('listPanel');
+    }));
+    if (task.type === '報廢' && task.person) actions.append(button('改用保管人查詢', () => {
+      query = task.person;
+      byId('query').value = query;
+      run(() => find(0));
+    }));
+    context.append(actions);
+  }
+  const search = byId('query').value.trim();
+  byId('results').replaceChildren();
+  query = search;
+  currentPage = 0;
+  buttons.forEach(el => el.setAttribute('aria-selected',String(el.dataset.tab === tab)));
+  byId('work').hidden = tab === 'lookup';
+  status('');
+  if (tab !== 'lookup') {
+    const scrap = tab === '報廢';
+    byId('workTitle').textContent = scrap ? '待報廢' : '待移轉';
+    byId('submitCase').textContent = scrap ? '確認並移至已準備報廢' : '建立申請單';
+    byId('taskNumberLabel').textContent = scrap ? '機器編號' : '財產編號';
+    byId('taskPersonLabel').textContent = scrap ? '保管人姓名' : '新保管人';
+    byId('taskNumber').required = scrap;
+    byId('taskPerson').required = false;
+    byId('registerForm').reset();
+    byId('taskHint').textContent = scrap ? '登記後可稍後比對財產。' : '財產編號或新保管人至少填一項。';
+    renderCart();
+    run(async () => {
+      await refreshWork();
+      if (query) await find(0);
+    });
+  }
+}
+
+buttons.forEach(el => { el.onclick = () => showTab(el.dataset.tab); });
+const panels = [...document.querySelectorAll('[data-panel]')];
+function selectPanel(id) {
+  panels.forEach(button => {
+    const selected = button.dataset.panel === id;
+    button.setAttribute('aria-selected', String(selected));
+    byId(button.dataset.panel).hidden = !selected;
+  });
+}
+panels.forEach(button => {
+  button.onclick = () => {
+    if (busy) return;
+    const id = button.dataset.panel;
+    if (id === 'operations' && tab === 'lookup') {
+      showTab(matching?.type || '報廢');
+      return;
+    }
+    selectPanel(id);
+    status('');
+    if (id === 'listPanel') run(refreshWork);
+  };
+});
+function queueFromSearch(type) {
+  const identifier = byId('query').value.trim();
+  showTab(type);
+  byId('taskNumber').value = identifier;
+  byId('registerForm').scrollIntoView({block:'nearest'});
+
+}
+byId('queueScrap').onclick = () => queueFromSearch('報廢');
+byId('queueMove').onclick = () => queueFromSearch('轉移');
+byId('searchForm').onsubmit = event => {
+  event.preventDefault();
+  query = byId('query').value.trim();
+  run(() => find(0));
+};
+byId('reload').onclick = () => run(refreshWork);
+byId('registerForm').onsubmit = event => {
+  event.preventDefault();
+  run(async () => {
+    await rpc('registerTask', tab, byId('taskNumber').value, byId('taskPerson').value);
+    selectList(tab === '報廢' ? 'pendingScrap' : 'pendingMove');
+    byId('registerForm').reset();
+    await refreshWork();
+    return '已加入待辦。';
+  }).then(() => byId('taskNumber').focus());
+};
+byId('cartForm').onsubmit = event => {
+  event.preventDefault();
+  run(async () => {
+    const items = Array.from(draft[tab].values(), ({row, ...item}) => item);
+    await rpc('createCase', {type:tab, items});
+    draft[tab].clear();
+    renderCart();
+    await refreshWork();
+    if (query) await find(currentPage);
+    selectList(tab === '報廢' ? 'preparedScrap' : 'preparedMove');
+    selectPanel('listPanel');
+    return tab === '報廢' ? '申請單已建立，可在「已準備報廢」列印或下載 Word。' : '申請單已建立，可下載 Word 表單。';
+  });
+};
+function resetImport() {
+  previewed = null;
+  byId('commit').hidden = true;
+  byId('importReport').replaceChildren();
+}
+byId('source').onchange = resetImport;
+byId('assetName').oninput = resetImport;
+
+function reportImport(result, committed) {
+  const box = byId('importReport');
+  box.replaceChildren(node('p', (committed ? '實際寫入 ' + result.written : '可新增 ' + result.fresh) +
+    ' 筆，名稱符合 ' + result.matched + ' 筆，其他財產略過 ' + result.skipped + ' 筆，重複 ' + result.duplicates + ' 筆，已歸檔略過 ' + result.archived + ' 筆，異常 ' + result.errors.length + ' 筆。'));
+  if (result.errors.length) {
+    const list = node('ul');
+    result.errors.forEach(message => list.append(node('li',message)));
+    box.append(list);
+  }
+}
+
+byId('preview').onclick = () => run(async () => {
+  previewed = null;
+  byId('commit').hidden = true;
+  byId('importReport').replaceChildren();
+  const file = byId('source').files[0];
+  if (!file || file.size > 5 * 1024 * 1024) throw new Error('請選擇 5 MB 以下的 .xlsx 清冊。');
+  const encoded = await new Promise((resolve,reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = () => reject(new Error('無法讀取檔案。'));
+    reader.readAsDataURL(file);
+  });
+  const assetName = byId('assetName').value.trim() || '個人電腦';
+  const result = await rpc('importAssets',file.name,encoded,false,assetName);
+  reportImport(result,false);
+  if (result.fresh && !result.errors.length) {
+    previewed = {name:file.name,encoded,assetName};
+    byId('commit').hidden = false;
+  }
+});
+byId('commit').onclick = () => run(async () => {
+  if (!previewed) return;
+  const result = await rpc('importAssets',previewed.name,previewed.encoded,true,previewed.assetName);
+  reportImport(result,true);
+  previewed = null;
+  byId('commit').hidden = true;
+  if (query) await find(currentPage);
+  return '匯入完成，實際寫入 ' + result.written + ' 筆。';
+});
+byId('clearForm').onsubmit = event => {
+  event.preventDefault();
+  const confirmation = byId('clearText').value;
+  if (confirmation !== '清除全部資料') {
+    status('請完整輸入「清除全部資料」。', true);
+    return;
+  }
+  if (!window.confirm('確定清除五張系統工作表的全部紀錄？此操作無法在系統內復原。')) return;
+  run(async () => {
+    const counts = await rpc('clearAllData', confirmation);
+    pendingResults.clear();
+    Object.values(draft).forEach(items => items.clear());
+    matching = null;
+    byId('matchContext').hidden = true;
+    byId('matchContext').replaceChildren();
+    query = '';
+    currentPage = 0;
+    byId('searchForm').reset();
+    byId('results').replaceChildren();
+    byId('clearForm').reset();
+    resetImport();
+    if (tab !== 'lookup') {
+      renderCart();
+    }
+    await refreshWork();
+    return '已清除資料。' + Object.entries(counts).map(([name, count]) => name + ' ' + count + ' 列').join('、') + '。';
+  });
+};
+showTab('報廢');
+selectPanel('listPanel');
+</script>
+</body>
+</html>
