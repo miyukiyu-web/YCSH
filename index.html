@@ -1,0 +1,1743 @@
+<!--
+==================================================================================
+ Google Apps Script (GAS) 部署說明 / Deployment Guide
+==================================================================================
+1. 前往 Google 雲端硬碟 (Google Drive)，新增一個「Google Apps Script」專案。
+2. 在「程式碼.gs (Code.gs)」中貼入 Code.gs 檔案中的程式碼：
+
+   function doGet(e) {
+     var template = HtmlService.createTemplateFromFile('index');
+     var requestedLang = (e && e.parameter && e.parameter.lang) ? e.parameter.lang.toLowerCase() : 'en';
+     var validLangs = ['en', 'zh', 'ja', 'ko'];
+     template.initialLang = (validLangs.indexOf(requestedLang) !== -1) ? requestedLang : 'en';
+     
+     return template.evaluate()
+       .setTitle('Chiayi County Yung Ching High School | Future Standard 2.0')
+       .addMetaTag('viewport', 'width=device-width, initial-scale=1.0, maximum-scale=5.0')
+       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
+       .setFaviconUrl('https://lh3.googleusercontent.com/d/11oeojtlq1WpAm8mZ47LzemGM_sdodQL4');
+   }
+
+3. 在 GAS 專案左側點擊「+」新增「HTML」檔案，命名為「index.html」（或 index）。
+4. 將本檔案全部內容完整複製貼入該 HTML 檔案中。
+5. 點擊右上角「部署 (Deploy)」 > 「新建部署 (New deployment)」：
+   - 種類選取「網頁應用程式 (Web app)」
+   - 執行身分：「我 (Me)」
+   - 誰可以存取：「任何人 (Anyone)」
+6. 點擊部署後取得的網址即可供全球訪客公開瀏覽！
+==================================================================================
+-->
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chiayi County Yung Ching Senior High School - Brand Yung-Ching · Future Standard 2.0</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts: Inter, Noto Sans TC, Noto Sans JP, Noto Sans KR -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700&family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0f7ff',
+              100: '#e0effe',
+              200: '#bae0fd',
+              500: '#0066cc',
+              600: '#0052a3',
+              700: '#004080',
+              800: '#072b54',
+              900: '#0a1d36',
+            },
+            accent: {
+              gold: '#f59e0b',
+              emerald: '#10b981',
+              cyan: '#06b6d4',
+              crimson: '#e11d48'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'Noto Sans TC', 'Noto Sans JP', 'Noto Sans KR', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    .glass-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+    .bg-grid-pattern {
+      background-size: 40px 40px;
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    }
+
+    /* 頁首盾牌校徽樣式：依畫面自適應高度與懸浮微動效 */
+    .ycsh-shield-header {
+      height: 44px;
+      width: auto;
+      max-width: 48px;
+      object-fit: contain;
+      filter: drop-shadow(0 2px 6px rgba(0, 50, 120, 0.22));
+      transition: transform 0.25s ease, filter 0.25s ease;
+      display: block;
+    }
+    @media (min-width: 640px) {
+      .ycsh-shield-header {
+        height: 52px;
+        max-width: 56px;
+      }
+    }
+    .ycsh-shield-header:hover {
+      transform: scale(1.06);
+      filter: drop-shadow(0 4px 10px rgba(0, 82, 163, 0.32));
+    }
+
+    /* 頁尾深色背景盾牌校徽 */
+    .ycsh-shield-footer {
+      height: 48px;
+      width: auto;
+      max-width: 54px;
+      object-fit: contain;
+      filter: drop-shadow(0 3px 12px rgba(245, 158, 11, 0.32)) drop-shadow(0 2px 6px rgba(255, 255, 255, 0.25));
+      transition: transform 0.25s ease;
+      display: block;
+    }
+    @media (min-width: 640px) {
+      .ycsh-shield-footer {
+        height: 58px;
+        max-width: 64px;
+      }
+    }
+    .ycsh-shield-footer:hover {
+      transform: scale(1.06);
+    }
+
+    /* Language Button Active State */
+    .lang-item.active {
+      background-color: #0052a3;
+      color: #ffffff;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased selection:bg-brand-500 selection:text-white">
+
+  <!-- Header & Navigation -->
+  <header class="fixed top-0 left-0 right-0 z-50 glass-card border-b border-slate-200/80 transition-all duration-300 shadow-sm" id="navbar">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+      
+      <!-- School Brand with Shield Crest & Typography -->
+      <a href="#hero" class="flex items-center gap-3 group shrink-0" title="Chiayi County Yung-Ching Senior High School">
+        <div class="relative flex items-center justify-center shrink-0">
+          <img 
+            id="mainSchoolLogo"
+            src="https://lh3.googleusercontent.com/d/11oeojtlq1WpAm8mZ47LzemGM_sdodQL4" 
+            alt="YCSH School Crest" 
+            class="ycsh-shield-header"
+            loading="eager"
+            referrerpolicy="no-referrer"
+            onerror="if(this.src!=='https://drive.google.com/uc?export=view&id=11oeojtlq1WpAm8mZ47LzemGM_sdodQL4'){this.src='https://drive.google.com/uc?export=view&id=11oeojtlq1WpAm8mZ47LzemGM_sdodQL4';}else{fallbackToSvgLogo('mainSchoolLogo', 'headerShieldSvg');}"
+          />
+          <!-- 向量備援校徽 -->
+          <svg id="headerShieldSvg" class="ycsh-shield-header hidden" viewBox="0 0 100 122" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M 12 11 C 12 6, 17 4, 24 4 L 76 4 C 83 4, 88 6, 88 11 C 94 13, 95 21, 89 24 L 89 28 L 11 28 L 11 24 C 5 21, 6 13, 12 11 Z" fill="#38677a"/>
+            <line x1="11" y1="28" x2="89" y2="28" stroke="#254654" stroke-width="1.5"/>
+            <path d="M 15 12 Q 21 8 24 16 L 27 9 Q 29 17 26 23 M 23 16 L 24 23 M 28 17 Q 38 8 47 11 Q 38 23 48 21 M 51 18 Q 62 10 68 14 Q 56 18 67 22 M 71 9 L 71 23 M 71 15 Q 80 13 85 9 L 85 23" fill="none" stroke="#fed637" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M 11 28 L 89 28 C 89 28, 89 77, 50 117 C 11 77, 11 28, 11 28 Z" fill="#5c6266" stroke="#fed637" stroke-width="3.5" stroke-linejoin="round"/>
+            <path d="M 17 38 Q 27 54 18 76 Q 16 85 24 96" fill="none" stroke="#fed637" stroke-width="3.6" stroke-linecap="round"/>
+            <path d="M 18 56 Q 34 60 44 48 Q 47 40 47 29" fill="none" stroke="#fed637" stroke-width="3.6" stroke-linecap="round"/>
+            <path d="M 43 65 Q 40 45 42 29" fill="none" stroke="#fed637" stroke-width="3.6" stroke-linecap="round"/>
+            <path d="M 43 65 Q 45 88 38 107" fill="none" stroke="#fed637" stroke-width="3.6" stroke-linecap="round"/>
+            <path d="M 62 29 Q 65 56 61 80 Q 57 99 49 113" fill="none" stroke="#fed637" stroke-width="3.6" stroke-linecap="round"/>
+            <path d="M 83 36 Q 84 62 82 85 Q 77 100 68 108" fill="none" stroke="#fed637" stroke-width="3.6" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="flex flex-col justify-center">
+          <div class="flex items-center gap-2">
+            <span class="text-base sm:text-lg font-black tracking-tight text-slate-900 group-hover:text-brand-600 transition-colors" data-i18n="school_title">Chiayi County Yung Ching High School</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-brand-600 truncate" data-i18n="nav_subheading">Chiayi County Yung Ching High School</span>
+            <span class="hidden md:inline-block w-1 h-1 rounded-full bg-slate-300"></span>
+            <span class="hidden md:inline-block text-xs font-bold text-accent-gold" data-i18n="nav_school_badge">Brand Yung-Ching · Future Standard 2.0</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- Desktop Nav & Prominent Language Menu -->
+      <div class="hidden xl:flex items-center gap-6 text-sm font-medium text-slate-600">
+        <nav class="flex items-center gap-5">
+          <a href="#vision" class="hover:text-brand-600 transition-colors py-1" data-i18n="nav_vision">Vision</a>
+          <a href="#six-pillars" class="hover:text-brand-600 transition-colors py-1" data-i18n="nav_six_pillars">6 Pillars 2.0</a>
+          <a href="#highlights" class="hover:text-brand-600 transition-colors py-1" data-i18n="nav_highlights">Achievements</a>
+          <a href="#curriculum" class="hover:text-brand-600 transition-colors py-1" data-i18n="nav_curriculum">Special Programs</a>
+          <a href="#global-steam" class="hover:text-brand-600 transition-colors py-1" data-i18n="nav_steam">STEAM & Global</a>
+          <a href="#commitment" class="bg-brand-600 hover:bg-brand-700 text-white px-3.5 py-1.5 rounded-lg font-semibold shadow-sm hover:shadow transition-all" data-i18n="nav_promise">Our Promise</a>
+        </nav>
+
+        <!-- PROMINENT LANGUAGE MENU (Desktop) -->
+        <div class="relative group">
+          <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100/90 hover:bg-slate-200 border border-slate-300 text-slate-800 font-semibold cursor-pointer transition-all shadow-sm">
+            <i data-lucide="globe" class="w-4 h-4 text-brand-600"></i>
+            <span class="text-xs tracking-wide">Language:</span>
+            <span id="currentLangLabel" class="text-xs text-brand-700 font-bold">English</span>
+            <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-500 group-hover:rotate-180 transition-transform"></i>
+          </div>
+
+          <!-- Dropdown items -->
+          <div class="absolute right-0 top-full mt-1.5 w-44 bg-white rounded-xl shadow-xl border border-slate-200 p-1.5 hidden group-hover:block transition-all z-50">
+            <button type="button" class="lang-item w-full text-left px-3 py-2 rounded-lg text-xs flex items-center justify-between transition-colors active" onclick="setLanguage('en')">
+              <span>English</span>
+              <span class="text-[10px] text-slate-400">EN</span>
+            </button>
+            <button type="button" class="lang-item w-full text-left px-3 py-2 rounded-lg text-xs flex items-center justify-between transition-colors text-slate-700 hover:bg-slate-100" onclick="setLanguage('zh')">
+              <span>繁體中文</span>
+              <span class="text-[10px] text-slate-400">ZH</span>
+            </button>
+            <button type="button" class="lang-item w-full text-left px-3 py-2 rounded-lg text-xs flex items-center justify-between transition-colors text-slate-700 hover:bg-slate-100" onclick="setLanguage('ja')">
+              <span>日本語</span>
+              <span class="text-[10px] text-slate-400">JA</span>
+            </button>
+            <button type="button" class="lang-item w-full text-left px-3 py-2 rounded-lg text-xs flex items-center justify-between transition-colors text-slate-700 hover:bg-slate-100" onclick="setLanguage('ko')">
+              <span>한국어</span>
+              <span class="text-[10px] text-slate-400">KO</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Mobile / Tablet Action Group -->
+      <div class="flex items-center gap-2 xl:hidden">
+        <!-- Prominent Mobile Language Trigger -->
+        <div class="relative">
+          <button id="mobileLangToggle" type="button" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-100 border border-slate-300 text-slate-800 text-xs font-bold">
+            <i data-lucide="globe" class="w-3.5 h-3.5 text-brand-600"></i>
+            <span id="mobileLangLabel">EN</span>
+            <i data-lucide="chevron-down" class="w-3 h-3 text-slate-500"></i>
+          </button>
+          <!-- Mobile Dropdown -->
+          <div id="mobileLangDropdown" class="hidden absolute right-0 mt-1 w-36 bg-white rounded-lg shadow-xl border border-slate-200 p-1 text-xs z-50">
+            <button type="button" class="block w-full text-left px-3 py-2 rounded hover:bg-slate-100 font-semibold" onclick="setLanguage('en'); toggleMobileLang();">English</button>
+            <button type="button" class="block w-full text-left px-3 py-2 rounded hover:bg-slate-100 font-semibold" onclick="setLanguage('zh'); toggleMobileLang();">繁體中文</button>
+            <button type="button" class="block w-full text-left px-3 py-2 rounded hover:bg-slate-100 font-semibold" onclick="setLanguage('ja'); toggleMobileLang();">日本語</button>
+            <button type="button" class="block w-full text-left px-3 py-2 rounded hover:bg-slate-100 font-semibold" onclick="setLanguage('ko'); toggleMobileLang();">한국어</button>
+          </div>
+        </div>
+
+        <!-- Mobile Menu Trigger -->
+        <button id="mobileMenuBtn" class="p-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors" aria-label="Toggle Navigation">
+          <i data-lucide="menu" class="w-6 h-6"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Dropdown Menu -->
+    <div id="mobileMenu" class="hidden xl:hidden bg-white border-b border-slate-200 px-6 py-4 space-y-3 shadow-lg">
+      <a href="#vision" class="block py-2 text-slate-700 hover:text-brand-600 font-medium mobile-nav-link" data-i18n="nav_vision">Vision</a>
+      <a href="#six-pillars" class="block py-2 text-slate-700 hover:text-brand-600 font-medium mobile-nav-link" data-i18n="nav_six_pillars">6 Pillars 2.0</a>
+      <a href="#highlights" class="block py-2 text-slate-700 hover:text-brand-600 font-medium mobile-nav-link" data-i18n="nav_highlights">Achievements</a>
+      <a href="#curriculum" class="block py-2 text-slate-700 hover:text-brand-600 font-medium mobile-nav-link" data-i18n="nav_curriculum">Special Programs</a>
+      <a href="#global-steam" class="block py-2 text-slate-700 hover:text-brand-600 font-medium mobile-nav-link" data-i18n="nav_steam">STEAM & Global</a>
+      <a href="#commitment" class="block text-center py-2.5 bg-brand-600 text-white rounded-lg font-semibold mobile-nav-link" data-i18n="nav_promise">Our Promise</a>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section id="hero" class="relative pt-32 pb-24 md:pt-40 md:pb-36 bg-gradient-to-br from-brand-900 via-brand-800 to-slate-900 text-white overflow-hidden">
+    <div class="absolute inset-0 bg-grid-pattern opacity-40"></div>
+    <div class="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-brand-500/20 blur-3xl pointer-events-none"></div>
+    <div class="absolute -bottom-24 -left-24 w-96 h-96 rounded-full bg-accent-cyan/15 blur-3xl pointer-events-none"></div>
+
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <!-- Tag -->
+      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-accent-gold text-xs sm:text-sm font-semibold mb-6">
+        <i data-lucide="sparkles" class="w-4 h-4"></i>
+        <span data-i18n="hero_badge">Rooted in Chiayi, Shining Globally | 6-Year Cohesive Secondary Education</span>
+      </div>
+
+      <!-- Main Headline -->
+      <h1 class="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight sm:leading-tight mb-6">
+        <span data-i18n="hero_title_prefix">Brand Yung-Ching · Future Standard</span> <span class="text-transparent bg-clip-text bg-gradient-to-r from-accent-cyan via-sky-300 to-brand-200">2.0</span>
+      </h1>
+
+      <p class="max-w-3xl mx-auto text-base sm:text-xl text-slate-300 font-light leading-relaxed mb-10" data-i18n="hero_subtitle">
+        Empowering every child to discover their stage and every talent to realize their future.<br class="hidden sm:inline">
+        Integrating "Bilingual Proficiency, Dual-Sciences, and Global Engagement" for holistic excellence.
+      </p>
+
+      <!-- Key Focus Pills -->
+      <div class="flex flex-wrap justify-center gap-2.5 sm:gap-3.5 max-w-4xl mx-auto mb-10 text-xs sm:text-sm">
+        <span class="px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-white/10 border border-white/10 text-slate-200 flex items-center gap-1.5"><i data-lucide="book-open" class="w-4 h-4 text-sky-400"></i> <span data-i18n="pill_academic">Academic Elevation</span></span>
+        <span class="px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-white/10 border border-white/10 text-slate-200 flex items-center gap-1.5"><i data-lucide="cpu" class="w-4 h-4 text-cyan-400"></i> <span data-i18n="pill_tech">Tech Advancing</span></span>
+        <span class="px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-white/10 border border-white/10 text-slate-200 flex items-center gap-1.5"><i data-lucide="globe" class="w-4 h-4 text-emerald-400"></i> <span data-i18n="pill_global">Global Horizon</span></span>
+        <span class="px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-white/10 border border-white/10 text-slate-200 flex items-center gap-1.5"><i data-lucide="trophy" class="w-4 h-4 text-amber-400"></i> <span data-i18n="pill_sports">Athletic Tenacity</span></span>
+        <span class="px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-white/10 border border-white/10 text-slate-200 flex items-center gap-1.5"><i data-lucide="palette" class="w-4 h-4 text-rose-400"></i> <span data-i18n="pill_arts">Humanities Depth</span></span>
+        <span class="px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-white/10 border border-white/10 text-slate-200 flex items-center gap-1.5"><i data-lucide="heart" class="w-4 h-4 text-pink-400"></i> <span data-i18n="pill_happiness">Inner Wellbeing</span></span>
+      </div>
+
+      <!-- Quick Action Buttons -->
+      <div class="flex flex-wrap items-center justify-center gap-4">
+        <a href="#six-pillars" class="px-7 py-3.5 rounded-xl bg-gradient-to-r from-brand-500 to-sky-500 hover:from-brand-600 hover:to-sky-600 text-white font-semibold shadow-lg shadow-brand-500/30 transition-all hover:scale-105" data-i18n="hero_cta_pillars">
+          Explore 6 Strategic Pillars
+        </a>
+        <a href="#highlights" class="px-7 py-3.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 font-semibold backdrop-blur-sm transition-all" data-i18n="hero_cta_achievements">
+          View Outstanding Honors
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats Ribbon -->
+  <section class="relative z-10 -mt-10 max-w-6xl mx-auto px-4 sm:px-6">
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-100 p-6 sm:p-8 grid grid-cols-2 md:grid-cols-4 gap-6 text-center divide-y md:divide-y-0 md:divide-x divide-slate-100">
+      <div class="pt-4 md:pt-0">
+        <div class="text-2xl sm:text-4xl font-black text-brand-600" data-i18n="stat_1_num">4 Years Straight</div>
+        <p class="text-xs sm:text-sm font-medium text-slate-500 mt-1" data-i18n="stat_1_desc">Ranked #1 among Chiayi public high schools in GSAT results</p>
+      </div>
+      <div class="pt-4 md:pt-0">
+        <div class="text-2xl sm:text-4xl font-black text-accent-gold" data-i18n="stat_2_num">First Med Student</div>
+        <p class="text-xs sm:text-sm font-medium text-slate-500 mt-1" data-i18n="stat_2_desc">Admitted to NCKU & CMU Medicine via Stars Program</p>
+      </div>
+      <div class="pt-4 md:pt-0">
+        <div class="text-2xl sm:text-4xl font-black text-accent-cyan" data-i18n="stat_3_num">5+ Patents</div>
+        <p class="text-xs sm:text-sm font-medium text-slate-500 mt-1" data-i18n="stat_3_desc">AI innovations & international competition silver medals</p>
+      </div>
+      <div class="pt-4 md:pt-0">
+        <div class="text-2xl sm:text-4xl font-black text-accent-emerald" data-i18n="stat_4_num">27+ Schools</div>
+        <p class="text-xs sm:text-sm font-medium text-slate-500 mt-1" data-i18n="stat_4_desc">Global school partnerships & sister school networks</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Vision Section -->
+  <section id="vision" class="py-20 lg:py-28 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid lg:grid-cols-12 gap-12 items-center">
+      <!-- Quote Card -->
+      <div class="lg:col-span-5 relative">
+        <div class="relative mx-auto max-w-md rounded-3xl overflow-hidden shadow-2xl bg-gradient-to-tr from-brand-900 to-brand-700 p-8 text-white">
+          <div class="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center mb-6">
+            <i data-lucide="quote" class="w-7 h-7 text-accent-gold"></i>
+          </div>
+          <p class="text-base sm:text-lg italic font-light leading-relaxed mb-6" data-i18n="vision_quote">
+            "Education is never a sprint focused only on immediate scores; it is a long-distance marathon. A school's greatest responsibility is not forcing every child onto the same track, but helping each student find their own place and a path they are eager to pursue."
+          </p>
+          <div class="border-t border-white/20 pt-4 flex items-center justify-between">
+            <div>
+              <div class="font-bold text-lg" data-i18n="principal_name">Chun-Sung Kuo</div>
+              <div class="text-xs text-slate-300" data-i18n="principal_title">Principal of Yung-Ching High School</div>
+            </div>
+            <div class="text-right">
+              <span class="inline-block px-3 py-1 rounded-md bg-accent-gold/20 text-accent-gold text-xs font-semibold" data-i18n="vision_tagline">
+                Bilingual · Dual-Science · Global Connectivity
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- History and Strategic Core -->
+      <div class="lg:col-span-7 space-y-6">
+        <div class="inline-flex items-center gap-2 text-brand-600 font-bold text-sm tracking-wider uppercase">
+          <i data-lucide="compass" class="w-4 h-4"></i> <span data-i18n="vision_badge">School Heritage & Philosophy</span>
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-900 leading-tight" data-i18n="vision_heading">
+          Giving Back to the Land: From a Featured School to an Educational Brand
+        </h2>
+        <p class="text-slate-600 leading-relaxed text-sm sm:text-base" data-i18n="vision_p1">
+          Founded on August 1, 2009 by the Chiayi County Government in gratitude for Formosa Plastics Group founder Wang Yung-ching's dedication to improving local education, Yung-Ching High School provides an uninterrupted 6-year junior and senior high curriculum.
+        </p>
+        <p class="text-slate-600 leading-relaxed text-sm sm:text-base" data-i18n="vision_p2">
+          Embracing future competencies, our mission focuses on "Global Vision, Local Care, Forward-Looking Innovation, and Holistic Education". Entering the 115th academic year, we have established three key structural balances:
+        </p>
+
+        <div class="grid sm:grid-cols-3 gap-4 pt-2">
+          <div class="p-4 rounded-xl bg-slate-100 border border-slate-200">
+            <div class="font-bold text-slate-800 text-sm mb-1 flex items-center gap-1.5">
+              <i data-lucide="scale" class="w-4 h-4 text-brand-600"></i> <span data-i18n="balance_1_title">Upward & Inward</span>
+            </div>
+            <p class="text-xs text-slate-600" data-i18n="balance_1_desc">Academics reach upward while internal self-worth and resilience remain grounded.</p>
+          </div>
+          <div class="p-4 rounded-xl bg-slate-100 border border-slate-200">
+            <div class="font-bold text-slate-800 text-sm mb-1 flex items-center gap-1.5">
+              <i data-lucide="zap" class="w-4 h-4 text-accent-cyan"></i> <span data-i18n="balance_2_title">Forward & Deep</span>
+            </div>
+            <p class="text-xs text-slate-600" data-i18n="balance_2_desc">Cutting-edge technology accelerates progress, while the humanities inspire deep empathy.</p>
+          </div>
+          <div class="p-4 rounded-xl bg-slate-100 border border-slate-200">
+            <div class="font-bold text-slate-800 text-sm mb-1 flex items-center gap-1.5">
+              <i data-lucide="shield" class="w-4 h-4 text-emerald-600"></i> <span data-i18n="balance_3_title">Outward & Resilient</span>
+            </div>
+            <p class="text-xs text-slate-600" data-i18n="balance_3_desc">Global exchange expands horizons, and athletics build grit against adversity.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Six Strategic Pillars Section -->
+  <section id="six-pillars" class="py-20 bg-slate-100/70 border-y border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-3xl mx-auto mb-16">
+        <span class="text-xs sm:text-sm font-bold tracking-widest text-brand-600 uppercase" data-i18n="pillars_subtitle">Six Strategic Directions</span>
+        <h2 class="text-3xl sm:text-4xl font-black text-slate-900 mt-2 mb-4" data-i18n="pillars_heading">
+          Six Directions · Cultivating a Complete Person
+        </h2>
+        <p class="text-slate-600 text-sm sm:text-base" data-i18n="pillars_summary">
+          Academics ground our students; technology accelerates them; global perspective broadens their horizons; athletics strengthen them; humanities bring warmth; and inner wellbeing helps them find their true self.
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        
+        <!-- 1. Academic Elevation -->
+        <div class="bg-white rounded-2xl p-7 shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-200/80 flex flex-col justify-between group">
+          <div>
+            <div class="w-14 h-14 rounded-xl bg-blue-50 text-brand-600 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-brand-600 group-hover:text-white transition-all">
+              <i data-lucide="trending-up" class="w-7 h-7"></i>
+            </div>
+            <div class="text-xs font-bold text-brand-600 uppercase tracking-wider mb-1">Pillar 01</div>
+            <h3 class="text-xl font-bold text-slate-900 mb-3" data-i18n="p1_title">Academic Elevation | Gifted Leadership & Diversified Admissions</h3>
+            <p class="text-slate-600 text-sm leading-relaxed mb-4" data-i18n="p1_desc">
+              Beyond test scores, we cultivate systematic intellect. From career exploration in 10th grade to customized portfolio development and university consultation in senior years.
+            </p>
+            <ul class="text-xs text-slate-600 space-y-2 mb-6">
+              <li class="flex items-start gap-2">
+                <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-500 shrink-0 mt-0.5"></i>
+                <span data-i18n="p1_bullet1">Inaugurating Academic Gifted Classes (STEM & Humanities Groups).</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-500 shrink-0 mt-0.5"></i>
+                <span data-i18n="p1_bullet2">Claimed 34 county language speech awards, sending 4 representatives to the national contest.</span>
+              </li>
+            </ul>
+          </div>
+          <div class="pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-brand-700 bg-blue-50/50 -mx-7 -mb-7 p-4 rounded-b-2xl">
+            <span data-i18n="p1_core">Core: Standing Firm</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </div>
+        </div>
+
+        <!-- 2. Tech Advancing -->
+        <div class="bg-white rounded-2xl p-7 shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-200/80 flex flex-col justify-between group">
+          <div>
+            <div class="w-14 h-14 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-cyan-600 group-hover:text-white transition-all">
+              <i data-lucide="cpu" class="w-7 h-7"></i>
+            </div>
+            <div class="text-xs font-bold text-cyan-600 uppercase tracking-wider mb-1">Pillar 02</div>
+            <h3 class="text-xl font-bold text-slate-900 mb-3" data-i18n="p2_title">Tech Advancing | AI Empowerment & Semiconductor Pathway</h3>
+            <p class="text-slate-600 text-sm leading-relaxed mb-4" data-i18n="p2_desc">
+              Progressing from tool usage to design, system integration, and patents. The AI Semiconductor Program creates a seamless 3-year track (Python, circuits, AIoT, APCS).
+            </p>
+            <ul class="text-xs text-slate-600 space-y-2 mb-6">
+              <li class="flex items-start gap-2">
+                <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-500 shrink-0 mt-0.5"></i>
+                <span data-i18n="p2_bullet1">World Youth Invention Exhibition Silver Medal & Panasonic Award.</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-500 shrink-0 mt-0.5"></i>
+                <span data-i18n="p2_bullet2">Korea WICO Invention Silver Medal; 5 officially granted patents.</span>
+              </li>
+            </ul>
+          </div>
+          <div class="pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-cyan-800 bg-cyan-50/50 -mx-7 -mb-7 p-4 rounded-b-2xl">
+            <span data-i18n="p2_core">Core: Moving Fast</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </div>
+        </div>
+
+        <!-- 3. Global Horizon -->
+        <div class="bg-white rounded-2xl p-7 shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-200/80 flex flex-col justify-between group">
+          <div>
+            <div class="w-14 h-14 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-emerald-600 group-hover:text-white transition-all">
+              <i data-lucide="globe" class="w-7 h-7"></i>
+            </div>
+            <div class="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-1">Pillar 03</div>
+            <h3 class="text-xl font-bold text-slate-900 mb-3" data-i18n="p3_title">Global Horizon | Bilingual Mastery & Worldwide Co-learning</h3>
+            <p class="text-slate-600 text-sm leading-relaxed mb-4" data-i18n="p3_desc">
+              Not merely traveling abroad, but understanding one's relationship with the world. Spanning partnerships with 27 schools across Japan, Korea, Canada, the US, and Singapore.
+            </p>
+            <ul class="text-xs text-slate-600 space-y-2 mb-6">
+              <li class="flex items-start gap-2">
+                <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-500 shrink-0 mt-0.5"></i>
+                <span data-i18n="p3_bullet1">First graduate directly admitted to Canada's prestigious Simon Fraser University (SFU).</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-500 shrink-0 mt-0.5"></i>
+                <span data-i18n="p3_bullet2">Overseas Dream Fund: 15-day Minamisanriku disaster prevention and regional revitalization trip.</span>
+              </li>
+            </ul>
+          </div>
+          <div class="pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-emerald-800 bg-emerald-50/50 -mx-7 -mb-7 p-4 rounded-b-2xl">
+            <span data-i18n="p3_core">Core: Seeing Far</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </div>
+        </div>
+
+        <!-- 4. Athletic Tenacity -->
+        <div class="bg-white rounded-2xl p-7 shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-200/80 flex flex-col justify-between group">
+          <div>
+            <div class="w-14 h-14 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-amber-600 group-hover:text-white transition-all">
+              <i data-lucide="award" class="w-7 h-7"></i>
+            </div>
+            <div class="text-xs font-bold text-amber-600 uppercase tracking-wider mb-1">Pillar 04</div>
+            <h3 class="text-xl font-bold text-slate-900 mb-3" data-i18n="p4_title">Athletic Tenacity | Professional Training & Moral Integrity</h3>
+            <p class="text-slate-600 text-sm leading-relaxed mb-4" data-i18n="p4_desc">
+              "Train hard, study diligently, maintain discipline, practice courtesy". Recognized by the Ministry of Education as an Outstanding Physical Education School.
+            </p>
+            <ul class="text-xs text-slate-600 space-y-2 mb-6">
+              <li class="flex items-start gap-2">
+                <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-500 shrink-0 mt-0.5"></i>
+                <span data-i18n="p4_bullet1">National High School Games: 2 silvers, 7 bronzes; Girls' Futsal National 2nd place.</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-500 shrink-0 mt-0.5"></i>
+                <span data-i18n="p4_bullet2">National team athletes: 2026 World Cup Woodball 2 Gold & 1 Bronze; Korea Open Taekwondo Bronze.</span>
+              </li>
+            </ul>
+          </div>
+          <div class="pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-amber-800 bg-amber-50/50 -mx-7 -mb-7 p-4 rounded-b-2xl">
+            <span data-i18n="p4_core">Core: Growing Stronger</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </div>
+        </div>
+
+        <!-- 5. Humanities Depth -->
+        <div class="bg-white rounded-2xl p-7 shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-200/80 flex flex-col justify-between group">
+          <div>
+            <div class="w-14 h-14 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-rose-600 group-hover:text-white transition-all">
+              <i data-lucide="music" class="w-7 h-7"></i>
+            </div>
+            <div class="text-xs font-bold text-rose-600 uppercase tracking-wider mb-1">Pillar 05</div>
+            <h3 class="text-xl font-bold text-slate-900 mb-3" data-i18n="p5_title">Humanities Depth | Aesthetic Nurturing & Empathetic Hearts</h3>
+            <p class="text-slate-600 text-sm leading-relaxed mb-4" data-i18n="p5_desc">
+              In an era of rapid AI evolution, humanities are essential. Through chamber orchestra, fine arts, and filmmaking, students learn to appreciate beauty and empathize with others.
+            </p>
+            <ul class="text-xs text-slate-600 space-y-2 mb-6">
+              <li class="flex items-start gap-2">
+                <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-500 shrink-0 mt-0.5"></i>
+                <span data-i18n="p5_bullet1">Sizhu Chamber Ensemble earned the National Highest Distinction Award!</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-500 shrink-0 mt-0.5"></i>
+                <span data-i18n="p5_bullet2">Student film "After That Day": High school senior explored anti-bullying and directorial craft.</span>
+              </li>
+            </ul>
+          </div>
+          <div class="pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-rose-800 bg-rose-50/50 -mx-7 -mb-7 p-4 rounded-b-2xl">
+            <span data-i18n="p5_core">Core: Bringing Warmth</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </div>
+        </div>
+
+        <!-- 6. Inner Wellbeing -->
+        <div class="bg-white rounded-2xl p-7 shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-200/80 flex flex-col justify-between group">
+          <div>
+            <div class="w-14 h-14 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-purple-600 group-hover:text-white transition-all">
+              <i data-lucide="heart-handshake" class="w-7 h-7"></i>
+            </div>
+            <div class="text-xs font-bold text-purple-600 uppercase tracking-wider mb-1">Pillar 06</div>
+            <h3 class="text-xl font-bold text-slate-900 mb-3" data-i18n="p6_title">Inner Wellbeing | Adaptive Nurturing & Holistic Accompaniment</h3>
+            <p class="text-slate-600 text-sm leading-relaxed mb-4" data-i18n="p6_desc">
+              The true nucleus of our pillars: ensuring every student is seen. A secure, warm campus where failure is supported, dreams are believed, and unique potentials flourish.
+            </p>
+            <ul class="text-xs text-slate-600 space-y-2 mb-6">
+              <li class="flex items-start gap-2">
+                <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-500 shrink-0 mt-0.5"></i>
+                <span data-i18n="p6_bullet1">Urban connection: Active participation in the 2026 Taiwan Lantern Festival in Chiayi.</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-500 shrink-0 mt-0.5"></i>
+                <span data-i18n="p6_bullet2">Strong community support, City God Temple scholarships, and comprehensive guidance services.</span>
+              </li>
+            </ul>
+          </div>
+          <div class="pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-purple-800 bg-purple-50/50 -mx-7 -mb-7 p-4 rounded-b-2xl">
+            <span data-i18n="p6_core">Core: Finding Themselves</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Achievements Section -->
+  <section id="highlights" class="py-20 lg:py-28 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col md:flex-row md:items-end justify-between mb-12">
+      <div>
+        <div class="text-xs sm:text-sm font-bold text-brand-600 uppercase tracking-widest" data-i18n="achieve_tag">Achievements & Milestones</div>
+        <h2 class="text-3xl sm:text-4xl font-black text-slate-900 mt-1" data-i18n="achieve_heading">Breaking School Records Across Academics, Sports & Science</h2>
+      </div>
+      <p class="text-slate-500 text-sm max-w-md mt-4 md:mt-0" data-i18n="achieve_desc">
+        Through individualized guidance, students achieve outstanding outcomes in top medical schools, selective university admissions, and international arenas.
+      </p>
+    </div>
+
+    <!-- Highlight Showcase Cards -->
+    <div class="grid lg:grid-cols-3 gap-8">
+      
+      <!-- Box 1: Med & Stars Program -->
+      <div class="bg-gradient-to-b from-blue-50/60 to-white rounded-2xl p-6 border border-blue-100 relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-24 h-24 bg-brand-500/10 rounded-bl-full pointer-events-none"></div>
+        <div class="flex items-center gap-3 mb-4">
+          <span class="p-2.5 bg-brand-600 text-white rounded-lg shadow-sm"><i data-lucide="graduation-cap" class="w-5 h-5"></i></span>
+          <h3 class="text-lg font-bold text-slate-900" data-i18n="achieve_card1_title">Star Recommendation & Top Universities</h3>
+        </div>
+        <p class="text-slate-600 text-sm mb-4" data-i18n="achieve_card1_body">
+          Over 60% of admitted students placed into national and medical universities, with acceptances to NTU, NCKU, NYCU, NTHU, and NCCU.
+        </p>
+        <div class="bg-white rounded-xl p-4 border border-slate-100 shadow-sm space-y-1">
+          <div class="text-xs font-bold text-brand-600 uppercase" data-i18n="achieve_card1_badge">Historic Breakthrough</div>
+          <div class="text-sm font-semibold text-slate-800" data-i18n="achieve_card1_name">Student Shao-Chen Weng</div>
+          <div class="text-xs text-slate-500" data-i18n="achieve_card1_note">Admitted to National Cheng Kung University & China Medical University School of Medicine!</div>
+        </div>
+      </div>
+
+      <!-- Box 2: Special Admissions -->
+      <div class="bg-gradient-to-b from-cyan-50/60 to-white rounded-2xl p-6 border border-cyan-100 relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-24 h-24 bg-accent-cyan/10 rounded-bl-full pointer-events-none"></div>
+        <div class="flex items-center gap-3 mb-4">
+          <span class="p-2.5 bg-cyan-600 text-white rounded-lg shadow-sm"><i data-lucide="sparkle" class="w-5 h-5"></i></span>
+          <h3 class="text-lg font-bold text-slate-900" data-i18n="achieve_card2_title">Outstanding Special Talent Admissions</h3>
+        </div>
+        <p class="text-slate-600 text-sm mb-4" data-i18n="achieve_card2_body">
+          Personalized mock interviews and mentoring from guidance counselors led students to prestigious seats across natural sciences, CS, law, and social work.
+        </p>
+        <div class="space-y-1.5 text-xs text-slate-600">
+          <div class="p-2 bg-white rounded border border-slate-100 flex justify-between">
+            <span data-i18n="spec_univ_1">NTNU Math / NTOU & CCU Computer Science</span><span class="font-bold text-cyan-700" data-i18n="spec_student_1">C.Y. Huang, Y.X. Zhuang</span>
+          </div>
+          <div class="p-2 bg-white rounded border border-slate-100 flex justify-between">
+            <span data-i18n="spec_univ_2">NTUE Science / NDHU Valley College</span><span class="font-bold text-cyan-700" data-i18n="spec_student_2">Y.X. Xu, Y.Y. Zhuang</span>
+          </div>
+          <div class="p-2 bg-white rounded border border-slate-100 flex justify-between">
+            <span data-i18n="spec_univ_3">NSYSU Interdisciplinary / CCU Sports</span><span class="font-bold text-cyan-700" data-i18n="spec_student_3">J.Z. Ye, G.Y. Wu</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Box 3: Inventions & Athletics -->
+      <div class="bg-gradient-to-b from-amber-50/60 to-white rounded-2xl p-6 border border-amber-100 relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-24 h-24 bg-accent-gold/10 rounded-bl-full pointer-events-none"></div>
+        <div class="flex items-center gap-3 mb-4">
+          <span class="p-2.5 bg-accent-gold text-white rounded-lg shadow-sm"><i data-lucide="medal" class="w-5 h-5"></i></span>
+          <h3 class="text-lg font-bold text-slate-900" data-i18n="achieve_card3_title">Global Inventions & National Athletes</h3>
+        </div>
+        <p class="text-slate-600 text-sm mb-4" data-i18n="achieve_card3_body">
+          Applying technology to social good and forging resilience through competitive athletics on international stages.
+        </p>
+        <div class="space-y-2 text-xs">
+          <div class="p-2.5 bg-white rounded-xl border border-slate-100">
+            <span class="font-bold text-slate-800" data-i18n="achieve_award1_title">2026 Korea WICO World Invention Silver Medal</span>
+            <p class="text-slate-500 mt-0.5" data-i18n="achieve_award1_desc">AI-assisted traffic light recognition vest for the visually impaired.</p>
+          </div>
+          <div class="p-2.5 bg-white rounded-xl border border-slate-100">
+            <span class="font-bold text-slate-800" data-i18n="achieve_award2_title">2026 World Cup Woodball: 2 Golds, 1 Bronze</span>
+            <p class="text-slate-500 mt-0.5" data-i18n="achieve_award2_desc">Student Yun-Zhen Lin represented Chinese Taipei at the pinnacle of international competition.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Featured Programs Section -->
+  <section id="curriculum" class="py-20 bg-slate-900 text-white relative">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-3xl mx-auto mb-16">
+        <span class="text-xs sm:text-sm font-semibold tracking-widest text-accent-cyan uppercase" data-i18n="feat_subtitle">Featured Programs</span>
+        <h2 class="text-3xl sm:text-4xl font-extrabold mt-2 mb-4" data-i18n="feat_heading">
+          Future-Ready Specialized Academic Programs
+        </h2>
+        <p class="text-slate-400 text-sm sm:text-base" data-i18n="feat_desc">
+          Tailored to global industry demands, our cutting-edge curriculum bridges secondary education with premier universities and international careers.
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-8">
+        
+        <!-- Feature 1: Gifted Program -->
+        <div class="bg-slate-800/80 rounded-2xl p-7 border border-slate-700/80 hover:border-brand-500 transition-all flex flex-col justify-between">
+          <div>
+            <div class="inline-block px-3 py-1 rounded bg-brand-500/20 text-brand-300 font-semibold text-xs mb-4" data-i18n="feat_class1_badge">Commencing Academic Year 114</div>
+            <h3 class="text-xl font-bold mb-3 flex items-center gap-2">
+              <i data-lucide="brain" class="w-5 h-5 text-brand-400"></i> <span data-i18n="feat_class1_title">High School Academic Gifted Class</span>
+            </h3>
+            <p class="text-slate-300 text-sm leading-relaxed mb-6" data-i18n="feat_class1_body">
+              Featuring Math-Science and Language-Humanities divisions. Offers advanced seminar research, international competition training, and cross-disciplinary university projects.
+            </p>
+            <ul class="text-xs text-slate-400 space-y-2 mb-6">
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-accent-cyan"></i> <span data-i18n="feat_class1_b1">Gifted peer cohort fostering intellectual momentum</span></li>
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-accent-cyan"></i> <span data-i18n="feat_class1_b2">Direct research collaborations with university laboratories</span></li>
+            </ul>
+          </div>
+          <div class="text-xs text-slate-500 pt-4 border-t border-slate-700" data-i18n="feat_class1_target">Eligibility: Open to incoming senior high students via specialized assessment</div>
+        </div>
+
+        <!-- Feature 2: AI Semiconductor -->
+        <div class="bg-slate-800/80 rounded-2xl p-7 border border-slate-700/80 hover:border-cyan-500 transition-all flex flex-col justify-between">
+          <div>
+            <div class="inline-block px-3 py-1 rounded bg-cyan-500/20 text-cyan-300 font-semibold text-xs mb-4" data-i18n="feat_class2_badge">8 Required Core Credits + 3-Year Pathway</div>
+            <h3 class="text-xl font-bold mb-3 flex items-center gap-2">
+              <i data-lucide="binary" class="w-5 h-5 text-cyan-400"></i> <span data-i18n="feat_class2_title">AI & Semiconductor Specialized Program</span>
+            </h3>
+            <p class="text-slate-300 text-sm leading-relaxed mb-6" data-i18n="feat_class2_body">
+              Progresses from Python and circuit basics in Grade 10, AIoT/PCB and cybersecurity in Grade 11, to advanced independent research and APCS coaching in Grade 12.
+            </p>
+            <ul class="text-xs text-slate-400 space-y-2 mb-6">
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-accent-cyan"></i> <span data-i18n="feat_class2_b1">APCS curriculum coached by Tamkang Univ. Prof. Rao</span></li>
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-accent-cyan"></i> <span data-i18n="feat_class2_b2">Quantum computing and robotics micro-courses with NTU & CCU</span></li>
+            </ul>
+          </div>
+          <div class="text-xs text-slate-500 pt-4 border-t border-slate-700" data-i18n="feat_class2_target">Eligibility: 9th-grade graduates via specialized aptitude selection</div>
+        </div>
+
+        <!-- Feature 3: Bilingual Class -->
+        <div class="bg-slate-800/80 rounded-2xl p-7 border border-slate-700/80 hover:border-emerald-500 transition-all flex flex-col justify-between">
+          <div>
+            <div class="inline-block px-3 py-1 rounded bg-emerald-500/20 text-emerald-300 font-semibold text-xs mb-4" data-i18n="feat_class3_badge">MOE 2030 Bilingual Initiative</div>
+            <h3 class="text-xl font-bold mb-3 flex items-center gap-2">
+              <i data-lucide="languages" class="w-5 h-5 text-emerald-400"></i> <span data-i18n="feat_class3_title">Bilingual Experimental Program</span>
+            </h3>
+            <p class="text-slate-300 text-sm leading-relaxed mb-6" data-i18n="feat_class3_body">
+              All-English language courses alongside bilingual instruction in Earth Science, Physics, PE, Music, and Health. Enriched with overseas campus visits.
+            </p>
+            <ul class="text-xs text-slate-400 space-y-2 mb-6">
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-accent-cyan"></i> <span data-i18n="feat_class3_b1">Field immersion trips to schools and universities in Singapore and Japan</span></li>
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-accent-cyan"></i> <span data-i18n="feat_class3_b2">Training cross-cultural communicators as Yung-Ching Youth Ambassadors</span></li>
+            </ul>
+          </div>
+          <div class="text-xs text-slate-500 pt-4 border-t border-slate-700" data-i18n="feat_class3_target">Eligibility: Senior high freshmen selected through screening</div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- STEAM & Global Section -->
+  <section id="global-steam" class="py-20 lg:py-28 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid lg:grid-cols-2 gap-12 items-center">
+      
+      <!-- 科普教育深耕 -->
+      <div class="bg-white rounded-3xl p-8 sm:p-10 shadow-lg border border-slate-200">
+        <div class="inline-flex items-center gap-2 text-brand-600 font-bold text-xs uppercase tracking-wider mb-3">
+          <i data-lucide="flask-conical" class="w-4 h-4"></i> <span data-i18n="steam_badge">Model School Accreditation</span>
+        </div>
+        <h3 class="text-2xl sm:text-3xl font-black text-slate-900 mb-4" data-i18n="steam_heading">
+          Rooting Science: Traveling with Science Education
+        </h3>
+        <p class="text-slate-600 text-sm leading-relaxed mb-6" data-i18n="steam_body">
+          Our junior high interdisciplinary inquiry courses develop real-world problem-solving methodologies, laying a rock-solid foundation for advanced high school research.
+        </p>
+
+        <div class="space-y-3.5 text-sm text-slate-700">
+          <div class="flex items-start gap-3">
+            <span class="p-1.5 rounded bg-blue-100 text-brand-700 shrink-0 mt-0.5"><i data-lucide="train" class="w-4 h-4"></i></span>
+            <div>
+              <strong data-i18n="steam_item1_t">Anchor School for Taiwan Science Island Train</strong>
+              <p class="text-xs text-slate-500" data-i18n="steam_item1_d">Partnering with the National Science and Technology Council to deliver mobile science labs to rural communities.</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <span class="p-1.5 rounded bg-blue-100 text-brand-700 shrink-0 mt-0.5"><i data-lucide="smile" class="w-4 h-4"></i></span>
+            <div>
+              <strong data-i18n="steam_item2_t">Elementary School Fairs & Chiayi Science 168</strong>
+              <p class="text-xs text-slate-500" data-i18n="steam_item2_d">Students translate complex concepts into approachable experiments for primary schoolers.</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <span class="p-1.5 rounded bg-blue-100 text-brand-700 shrink-0 mt-0.5"><i data-lucide="plane-takeoff" class="w-4 h-4"></i></span>
+            <div>
+              <strong data-i18n="steam_item3_t">Bringing Science Abroad</strong>
+              <p class="text-xs text-slate-500" data-i18n="steam_item3_d">Pairing science demonstrations with international sister-school visits across the globe.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 國際交流網絡 -->
+      <div class="bg-gradient-to-br from-slate-900 to-brand-900 text-white rounded-3xl p-8 sm:p-10 shadow-lg">
+        <div class="inline-flex items-center gap-2 text-accent-cyan font-bold text-xs uppercase tracking-wider mb-3">
+          <i data-lucide="globe-2" class="w-4 h-4"></i> <span>Global Engagement</span>
+        </div>
+        <h3 class="text-2xl sm:text-3xl font-black mb-4" data-i18n="global_heading">
+          Beyond Borders: Global Co-learning Ambassadors
+        </h3>
+        <p class="text-slate-300 text-sm leading-relaxed mb-6" data-i18n="global_body">
+          "Step outside, and the world is before you; stay inside, and what's before you is your only world." The Yung-Ching Youth Ambassadors (YCYA) actively engage the global community.
+        </p>
+
+        <div class="grid grid-cols-2 gap-3 text-xs mb-6">
+          <div class="p-3 rounded-xl bg-white/10 border border-white/10">
+            <div class="font-bold text-white mb-0.5" data-i18n="global_box1_t">Japan Sister School Network</div>
+            <div class="text-slate-400" data-i18n="global_box1_d">Yumesaki, Kakogawa Minami, Harima Fukusaki, and Sanjo Commercial High Schools</div>
+          </div>
+          <div class="p-3 rounded-xl bg-white/10 border border-white/10">
+            <div class="font-bold text-white mb-0.5" data-i18n="global_box2_t">Korea Sister School</div>
+            <div class="text-slate-400" data-i18n="global_box2_d">Munsan Suyu High School, Paju, Gyeonggi-do</div>
+          </div>
+          <div class="p-3 rounded-xl bg-white/10 border border-white/10">
+            <div class="font-bold text-white mb-0.5" data-i18n="global_box3_t">Indigenous Cultural Exchange</div>
+            <div class="text-slate-400" data-i18n="global_box3_d">Mutual STEAM and Tsou cultural camps with Alishan schools</div>
+          </div>
+          <div class="p-3 rounded-xl bg-white/10 border border-white/10">
+            <div class="font-bold text-white mb-0.5" data-i18n="global_box4_t">Worldwide Collaborative Footprint</div>
+            <div class="text-slate-400" data-i18n="global_box4_d">27 partner schools across the US, Canada, Israel, Singapore, Vietnam, and Uganda</div>
+          </div>
+        </div>
+
+        <div class="p-4 rounded-xl bg-white/5 border border-white/10 text-xs text-slate-300 italic" data-i18n="global_quote">
+          "I come from Chiayi, from Taiwan, from Yung-Ching, and I can converse with the world with confidence!"
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Educational Commitment Section -->
+  <section id="commitment" class="py-20 bg-brand-50 border-t border-brand-100">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <span class="inline-block px-3.5 py-1.5 rounded-full bg-brand-200/80 text-brand-800 text-xs font-bold tracking-wider uppercase mb-4" data-i18n="promise_tag">
+        Our Core Promise
+      </span>
+      <h2 class="text-3xl sm:text-4xl font-black text-slate-900 mb-6" data-i18n="promise_heading">
+        "Brand Yung-Ching · Future Standard" is a Genuine Commitment
+      </h2>
+      <p class="text-slate-600 max-w-2xl mx-auto text-base sm:text-lg mb-12" data-i18n="promise_subtitle">
+        During six formative years at Yung-Ching, we ensure every student gains the courage and competence to meet the world:
+      </p>
+
+      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 text-left">
+        <div class="p-6 rounded-2xl bg-white shadow-sm border border-brand-100 hover:-translate-y-1 transition-transform">
+          <div class="w-10 h-10 rounded-xl bg-blue-100 text-brand-600 flex items-center justify-center font-black mb-4">
+            01
+          </div>
+          <h4 class="font-bold text-slate-900 mb-1" data-i18n="promise_1_t">Passionate Discovery</h4>
+          <p class="text-xs text-slate-600" data-i18n="promise_1_d">Discovering at least one field that sparks genuine, lasting passion.</p>
+        </div>
+
+        <div class="p-6 rounded-2xl bg-white shadow-sm border border-brand-100 hover:-translate-y-1 transition-transform">
+          <div class="w-10 h-10 rounded-xl bg-cyan-100 text-cyan-600 flex items-center justify-center font-black mb-4">
+            02
+          </div>
+          <h4 class="font-bold text-slate-900 mb-1" data-i18n="promise_2_t">Focused Dedication</h4>
+          <p class="text-xs text-slate-600" data-i18n="promise_2_d">Pursuing at least one goal with wholehearted determination.</p>
+        </div>
+
+        <div class="p-6 rounded-2xl bg-white shadow-sm border border-brand-100 hover:-translate-y-1 transition-transform">
+          <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center font-black mb-4">
+            03
+          </div>
+          <h4 class="font-bold text-slate-900 mb-1" data-i18n="promise_3_t">Mentorship</h4>
+          <p class="text-xs text-slate-600" data-i18n="promise_3_d">Encountering at least one devoted mentor who unconditionally believes in them.</p>
+        </div>
+
+        <div class="p-6 rounded-2xl bg-white shadow-sm border border-brand-100 hover:-translate-y-1 transition-transform">
+          <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center font-black mb-4">
+            04
+          </div>
+          <h4 class="font-bold text-slate-900 mb-1" data-i18n="promise_4_t">Proud Achievement</h4>
+          <p class="text-xs text-slate-600" data-i18n="promise_4_d">Building at least one breakthrough milestone that instills lifelong confidence.</p>
+        </div>
+      </div>
+
+      <!-- Banner Conclusion -->
+      <div class="mt-14 p-8 rounded-3xl bg-gradient-to-r from-brand-700 via-brand-600 to-sky-700 text-white shadow-xl">
+        <h3 class="text-2xl sm:text-3xl font-extrabold mb-3" data-i18n="conclusion_quote">
+          "Because I came to Yung-Ching, I discovered a better self and a vastly bigger world."
+        </h3>
+        <p class="text-slate-200 text-sm max-w-xl mx-auto" data-i18n="conclusion_sub">
+          Partnering with parents, empowering each student, and marching forward across six dimensions.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-slate-900 text-slate-400 py-14 border-t border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid md:grid-cols-3 gap-8 mb-10 text-sm">
+        <div>
+          <div class="flex items-center gap-3 mb-4">
+            <div class="inline-flex items-center gap-3">
+              <div class="relative flex items-center justify-center shrink-0">
+                <img 
+                  id="footerSchoolLogo"
+                  src="https://lh3.googleusercontent.com/d/11oeojtlq1WpAm8mZ47LzemGM_sdodQL4" 
+                  alt="YCSH Crest" 
+                  class="ycsh-shield-footer shrink-0"
+                  loading="lazy"
+                  referrerpolicy="no-referrer"
+                  onerror="if(this.src!=='https://drive.google.com/uc?export=view&id=11oeojtlq1WpAm8mZ47LzemGM_sdodQL4'){this.src='https://drive.google.com/uc?export=view&id=11oeojtlq1WpAm8mZ47LzemGM_sdodQL4';}else{fallbackToSvgLogo('footerSchoolLogo', 'footerShieldSvg');}"
+                />
+                <svg id="footerShieldSvg" class="ycsh-shield-footer shrink-0 hidden" viewBox="0 0 100 122" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M 12 11 C 12 6, 17 4, 24 4 L 76 4 C 83 4, 88 6, 88 11 C 94 13, 95 21, 89 24 L 89 28 L 11 28 L 11 24 C 5 21, 6 13, 12 11 Z" fill="#38677a"/>
+                  <line x1="11" y1="28" x2="89" y2="28" stroke="#254654" stroke-width="1.5"/>
+                  <path d="M 15 12 Q 21 8 24 16 L 27 9 Q 29 17 26 23 M 23 16 L 24 23 M 28 17 Q 38 8 47 11 Q 38 23 48 21 M 51 18 Q 62 10 68 14 Q 56 18 67 22 M 71 9 L 71 23 M 71 15 Q 80 13 85 9 L 85 23" fill="none" stroke="#fed637" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M 11 28 L 89 28 C 89 28, 89 77, 50 117 C 11 77, 11 28, 11 28 Z" fill="#5c6266" stroke="#fed637" stroke-width="3.5" stroke-linejoin="round"/>
+                  <path d="M 17 38 Q 27 54 18 76 Q 16 85 24 96" fill="none" stroke="#fed637" stroke-width="3.6" stroke-linecap="round"/>
+                  <path d="M 18 56 Q 34 60 44 48 Q 47 40 47 29" fill="none" stroke="#fed637" stroke-width="3.6" stroke-linecap="round"/>
+                  <path d="M 43 65 Q 40 45 42 29" fill="none" stroke="#fed637" stroke-width="3.6" stroke-linecap="round"/>
+                  <path d="M 43 65 Q 45 88 38 107" fill="none" stroke="#fed637" stroke-width="3.6" stroke-linecap="round"/>
+                  <path d="M 62 29 Q 65 56 61 80 Q 57 99 49 113" fill="none" stroke="#fed637" stroke-width="3.6" stroke-linecap="round"/>
+                  <path d="M 83 36 Q 84 62 82 85 Q 77 100 68 108" fill="none" stroke="#fed637" stroke-width="3.6" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <div>
+                <span class="block text-base font-extrabold text-white tracking-wider" data-i18n="footer_school_name">Chiayi County Yung-Ching Senior High School</span>
+                <span class="block text-[11px] text-slate-400">Chiayi County Yung-Ching Senior High School</span>
+              </div>
+            </div>
+          </div>
+          <p class="text-xs text-slate-400 leading-relaxed mb-4" data-i18n="footer_about">
+            Chiayi County Yung Ching Senior High School<br>6-Year Secondary Comprehensive School | Global Vision, Local Care, Forward-Looking Innovation, Holistic Education
+          </p>
+        </div>
+
+        <div>
+          <h4 class="text-white font-semibold mb-3 text-sm" data-i18n="footer_info_t">Contact Information</h4>
+          <p class="text-xs text-slate-400 space-y-1">
+            <span data-i18n="footer_addr">Address: No. 1, Xinyi 2nd Rd., Taibao City, Chiayi County 61248, Taiwan</span><br>
+            <span>Tel: +886-5-362-7777</span><br>
+            <span>Fax: +886-5-362-7778</span><br>
+            <span data-i18n="footer_traffic">Transit: Adjacent to THSR Chiayi Station & Southern Branch of National Palace Museum</span>
+          </p>
+        </div>
+
+        <div>
+          <h4 class="text-white font-semibold mb-3 text-sm" data-i18n="footer_pillars_t">Six Strategic Pillars</h4>
+          <div class="flex flex-wrap gap-2 text-xs">
+            <span class="px-2.5 py-1 rounded bg-slate-800 text-slate-300" data-i18n="pill_academic">Academic Elevation</span>
+            <span class="px-2.5 py-1 rounded bg-slate-800 text-slate-300" data-i18n="pill_tech">Tech Advancing</span>
+            <span class="px-2.5 py-1 rounded bg-slate-800 text-slate-300" data-i18n="pill_global">Global Horizon</span>
+            <span class="px-2.5 py-1 rounded bg-slate-800 text-slate-300" data-i18n="pill_sports">Athletic Tenacity</span>
+            <span class="px-2.5 py-1 rounded bg-slate-800 text-slate-300" data-i18n="pill_arts">Humanities Depth</span>
+            <span class="px-2.5 py-1 rounded bg-slate-800 text-slate-300" data-i18n="pill_happiness">Inner Wellbeing</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="border-t border-slate-800 pt-6 text-center text-xs text-slate-500">
+        &copy; 2026 Chiayi County Yung Ching Senior High School. All Rights Reserved.
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Fallback logic for Google Drive image in restricted environments
+    function fallbackToSvgLogo(imgId, svgId) {
+      const img = document.getElementById(imgId);
+      const svg = document.getElementById(svgId);
+      if (img) img.style.display = 'none';
+      if (svg) {
+        svg.classList.remove('hidden');
+        svg.style.display = 'block';
+      }
+    }
+
+    function initLogoFallback(imgId, svgId) {
+      const img = document.getElementById(imgId);
+      const svg = document.getElementById(svgId);
+      if (!img || !svg) return;
+
+      if (img.complete && img.naturalWidth === 0) {
+        fallbackToSvgLogo(imgId, svgId);
+      } else {
+        img.addEventListener('error', () => fallbackToSvgLogo(imgId, svgId));
+      }
+    }
+
+    // Toggle for mobile language dropdown
+    function toggleMobileLang() {
+      const dropdown = document.getElementById('mobileLangDropdown');
+      if (dropdown) dropdown.classList.toggle('hidden');
+    }
+
+    const mobileLangToggle = document.getElementById('mobileLangToggle');
+    if (mobileLangToggle) {
+      mobileLangToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleMobileLang();
+      });
+      document.addEventListener('click', () => {
+        const dropdown = document.getElementById('mobileLangDropdown');
+        if (dropdown && !dropdown.classList.contains('hidden')) {
+          dropdown.classList.add('hidden');
+        }
+      });
+    }
+
+    const i18nData = {
+      en: {
+        school_title: "Chiayi County Yung Ching High School",
+        footer_school_name: "Chiayi County Yung-Ching Senior High School",
+        nav_subheading: "Chiayi County Yung Ching High School",
+        nav_school_badge: "Brand Yung-Ching · Future Standard 2.0",
+        nav_vision: "Vision",
+        nav_six_pillars: "6 Pillars 2.0",
+        nav_highlights: "Achievements",
+        nav_curriculum: "Special Programs",
+        nav_steam: "STEAM & Global",
+        nav_promise: "Our Promise",
+        hero_badge: "Rooted in Chiayi, Shining Globally | 6-Year Cohesive Secondary Education",
+        hero_title_prefix: "Brand Yung-Ching · Future Standard",
+        hero_subtitle: "Empowering every child to discover their stage and every talent to realize their future.<br class='hidden sm:inline'>Integrating 'Bilingual Proficiency, Dual-Sciences, and Global Engagement' for holistic excellence.",
+        pill_academic: "Academic Elevation",
+        pill_tech: "Tech Advancing",
+        pill_global: "Global Horizon",
+        pill_sports: "Athletic Tenacity",
+        pill_arts: "Humanities Depth",
+        pill_happiness: "Inner Wellbeing",
+        hero_cta_pillars: "Explore 6 Strategic Pillars",
+        hero_cta_achievements: "View Outstanding Honors",
+        stat_1_num: "4 Years Straight",
+        stat_1_desc: "Ranked #1 among Chiayi public high schools in GSAT results",
+        stat_2_num: "First Med Student",
+        stat_2_desc: "Admitted to NCKU & CMU Medicine via Stars Program",
+        stat_3_num: "5+ Patents",
+        stat_3_desc: "AI innovations & international competition silver medals",
+        stat_4_num: "27+ Schools",
+        stat_4_desc: "Global school partnerships & sister school networks",
+        vision_quote: "“Education is never a sprint focused only on immediate scores; it is a long-distance marathon. A school's greatest responsibility is not forcing every child onto the same track, but helping each student find their own place and a path they are eager to pursue.”",
+        principal_name: "Chun-Sung Kuo",
+        principal_title: "Principal of Yung-Ching High School",
+        vision_tagline: "Bilingual · Dual-Science · Global Connectivity",
+        vision_badge: "School Heritage & Philosophy",
+        vision_heading: "Giving Back to the Land: From a Featured School to an Educational Brand",
+        vision_p1: "Founded on August 1, 2009 by the Chiayi County Government in gratitude for Formosa Plastics Group founder Wang Yung-ching's dedication to improving local education, Yung-Ching High School provides an uninterrupted 6-year junior and senior high curriculum.",
+        vision_p2: "Embracing future competencies, our mission focuses on 'Global Vision, Local Care, Forward-Looking Innovation, and Holistic Education'. Entering the 115th academic year, we have established three key structural balances:",
+        balance_1_title: "Upward & Inward",
+        balance_1_desc: "Academics reach upward while internal self-worth and resilience remain grounded.",
+        balance_2_title: "Forward & Deep",
+        balance_2_desc: "Cutting-edge technology accelerates progress, while the humanities inspire deep empathy.",
+        balance_3_title: "Outward & Resilient",
+        balance_3_desc: "Global exchange expands horizons, and athletics build grit against adversity.",
+        pillars_subtitle: "Six Strategic Directions",
+        pillars_heading: "Six Directions · Cultivating a Complete Person",
+        pillars_summary: "Academics ground our students; technology accelerates them; global perspective broadens their horizons; athletics strengthen them; humanities bring warmth; and inner wellbeing helps them find their true self.",
+        p1_title: "Academic Elevation | Gifted Leadership & Diversified Admissions",
+        p1_desc: "Beyond test scores, we cultivate systematic intellect. From career exploration in 10th grade to customized portfolio development and university consultation in senior years.",
+        p1_bullet1: "Inaugurating Academic Gifted Classes (STEM & Humanities Groups).",
+        p1_bullet2: "Claimed 34 county language speech awards, sending 4 representatives to the national contest.",
+        p1_core: "Core: Standing Firm",
+        p2_title: "Tech Advancing | AI Empowerment & Semiconductor Pathway",
+        p2_desc: "Progressing from tool usage to design, system integration, and patents. The AI Semiconductor Program creates a seamless 3-year track (Python, circuits, AIoT, APCS).",
+        p2_bullet1: "World Youth Invention Exhibition Silver Medal & Panasonic Award.",
+        p2_bullet2: "Korea WICO Invention Silver Medal; 5 officially granted patents.",
+        p2_core: "Core: Moving Fast",
+        p3_title: "Global Horizon | Bilingual Mastery & Worldwide Co-learning",
+        p3_desc: "Not merely traveling abroad, but understanding one's relationship with the world. Spanning partnerships with 27 schools across Japan, Korea, Canada, the US, and Singapore.",
+        p3_bullet1: "First graduate directly admitted to Canada's prestigious Simon Fraser University (SFU).",
+        p3_bullet2: "Overseas Dream Fund: 15-day Minamisanriku disaster prevention and regional revitalization trip.",
+        p3_core: "Core: Seeing Far",
+        p4_title: "Athletic Tenacity | Professional Training & Moral Integrity",
+        p4_desc: "'Train hard, study diligently, maintain discipline, practice courtesy'. Recognized by the Ministry of Education as an Outstanding Physical Education School.",
+        p4_bullet1: "National High School Games: 2 silvers, 7 bronzes; Girls' Futsal National 2nd place.",
+        p4_bullet2: "National team athletes: 2026 World Cup Woodball 2 Gold & 1 Bronze; Korea Open Taekwondo Bronze.",
+        p4_core: "Core: Growing Stronger",
+        p5_title: "Humanities Depth | Aesthetic Nurturing & Empathetic Hearts",
+        p5_desc: "In an era of rapid AI evolution, humanities are essential. Through chamber orchestra, fine arts, and filmmaking, students learn to appreciate beauty and empathize with others.",
+        p5_bullet1: "Sizhu Chamber Ensemble earned the National Highest Distinction Award!",
+        p5_bullet2: "Student film 'After That Day': High school senior explored anti-bullying and directorial craft.",
+        p5_core: "Core: Bringing Warmth",
+        p6_title: "Inner Wellbeing | Adaptive Nurturing & Holistic Accompaniment",
+        p6_desc: "The true nucleus of our pillars: ensuring every student is seen. A secure, warm campus where failure is supported, dreams are believed, and unique potentials flourish.",
+        p6_bullet1: "Urban connection: Active participation in the 2026 Taiwan Lantern Festival in Chiayi.",
+        p6_bullet2: "Strong community support, City God Temple scholarships, and comprehensive guidance services.",
+        p6_core: "Core: Finding Themselves",
+        achieve_tag: "Achievements & Milestones",
+        achieve_heading: "Breaking School Records Across Academics, Sports & Science",
+        achieve_desc: "Through individualized guidance, students achieve outstanding outcomes in top medical schools, selective university admissions, and international arenas.",
+        achieve_card1_title: "Star Recommendation & Top Universities",
+        achieve_card1_body: "Over 60% of admitted students placed into national and medical universities, with acceptances to NTU, NCKU, NYCU, NTHU, and NCCU.",
+        achieve_card1_badge: "Historic Breakthrough",
+        achieve_card1_name: "Student Shao-Chen Weng",
+        achieve_card1_note: "Admitted to National Cheng Kung University & China Medical University School of Medicine!",
+        achieve_card2_title: "Outstanding Special Talent Admissions",
+        achieve_card2_body: "Personalized mock interviews and mentoring from guidance counselors led students to prestigious seats across natural sciences, CS, law, and social work.",
+        spec_univ_1: "NTNU Math / NTOU & CCU Computer Science",
+        spec_student_1: "C.Y. Huang, Y.X. Zhuang",
+        spec_univ_2: "NTUE Science / NDHU Valley College",
+        spec_student_2: "Y.X. Xu, Y.Y. Zhuang",
+        spec_univ_3: "NSYSU Interdisciplinary / CCU Sports",
+        spec_student_3: "J.Z. Ye, G.Y. Wu",
+        achieve_card3_title: "Global Inventions & National Athletes",
+        achieve_card3_body: "Applying technology to social good and forging resilience through competitive athletics on international stages.",
+        achieve_award1_title: "2026 Korea WICO World Invention Silver Medal",
+        achieve_award1_desc: "AI-assisted traffic light recognition vest for the visually impaired.",
+        achieve_award2_title: "2026 World Cup Woodball: 2 Golds, 1 Bronze",
+        achieve_award2_desc: "Student Yun-Zhen Lin represented Chinese Taipei at the pinnacle of international competition.",
+        feat_subtitle: "Featured Programs",
+        feat_heading: "Future-Ready Specialized Academic Programs",
+        feat_desc: "Tailored to global industry demands, our cutting-edge curriculum bridges secondary education with premier universities and international careers.",
+        feat_class1_badge: "Commencing Academic Year 114",
+        feat_class1_title: "High School Academic Gifted Class",
+        feat_class1_body: "Featuring Math-Science and Language-Humanities divisions. Offers advanced seminar research, international competition training, and cross-disciplinary university projects.",
+        feat_class1_b1: "Gifted peer cohort fostering intellectual momentum",
+        feat_class1_b2: "Direct research collaborations with university laboratories",
+        feat_class1_target: "Eligibility: Open to incoming senior high students via specialized assessment",
+        feat_class2_badge: "8 Required Core Credits + 3-Year Pathway",
+        feat_class2_title: "AI & Semiconductor Specialized Program",
+        feat_class2_body: "Progresses from Python and circuit basics in Grade 10, AIoT/PCB and cybersecurity in Grade 11, to advanced independent research and APCS coaching in Grade 12.",
+        feat_class2_b1: "APCS curriculum coached by Tamkang Univ. Prof. Rao",
+        feat_class2_b2: "Quantum computing and robotics micro-courses with NTU & CCU",
+        feat_class2_target: "Eligibility: 9th-grade graduates via specialized aptitude selection",
+        feat_class3_badge: "MOE 2030 Bilingual Initiative",
+        feat_class3_title: "Bilingual Experimental Program",
+        feat_class3_body: "All-English language courses alongside bilingual instruction in Earth Science, Physics, PE, Music, and Health. Enriched with overseas campus visits.",
+        feat_class3_b1: "Field immersion trips to schools and universities in Singapore and Japan",
+        feat_class3_b2: "Training cross-cultural communicators as Yung-Ching Youth Ambassadors",
+        feat_class3_target: "Eligibility: Senior high freshmen selected through screening",
+        steam_badge: "Model School Accreditation",
+        steam_heading: "Rooting Science: Traveling with Science Education",
+        steam_body: "Our junior high interdisciplinary inquiry courses develop real-world problem-solving methodologies, laying a rock-solid foundation for advanced high school research.",
+        steam_item1_t: "Anchor School for Taiwan Science Island Train",
+        steam_item1_d: "Partnering with the National Science and Technology Council to deliver mobile science labs to rural communities.",
+        steam_item2_t: "Elementary School Fairs & Chiayi Science 168",
+        steam_item2_d: "Students translate complex concepts into approachable experiments for primary schoolers.",
+        steam_item3_t: "Bringing Science Abroad",
+        steam_item3_d: "Pairing science demonstrations with international sister-school visits across the globe.",
+        global_heading: "Beyond Borders: Global Co-learning Ambassadors",
+        global_body: "“Step outside, and the world is before you; stay inside, and what's before you is your only world.” The Yung-Ching Youth Ambassadors (YCYA) actively engage the global community.",
+        global_box1_t: "Japan Sister School Network",
+        global_box1_d: "Yumesaki, Kakogawa Minami, Harima Fukusaki, and Sanjo Commercial High Schools",
+        global_box2_t: "Korea Sister School",
+        global_box2_d: "Munsan Suyu High School, Paju, Gyeonggi-do",
+        global_box3_t: "Indigenous Cultural Exchange",
+        global_box3_d: "Mutual STEAM and Tsou cultural camps with Alishan schools",
+        global_box4_t: "Worldwide Collaborative Footprint",
+        global_box4_d: "27 partner schools across the US, Canada, Israel, Singapore, Vietnam, and Uganda",
+        global_quote: "“I come from Chiayi, from Taiwan, from Yung-Ching, and I can converse with the world with confidence!”",
+        promise_tag: "Our Core Promise",
+        promise_heading: "“Brand Yung-Ching · Future Standard” is a Genuine Commitment",
+        promise_subtitle: "During six formative years at Yung-Ching, we ensure every student gains the courage and competence to meet the world:",
+        promise_1_t: "Passionate Discovery",
+        promise_1_d: "Discovering at least one field that sparks genuine, lasting passion.",
+        promise_2_t: "Focused Dedication",
+        promise_2_d: "Pursuing at least one goal with wholehearted determination.",
+        promise_3_t: "Mentorship",
+        promise_3_d: "Encountering at least one devoted mentor who unconditionally believes in them.",
+        promise_4_t: "Proud Achievement",
+        promise_4_d: "Building at least one breakthrough milestone that instills lifelong confidence.",
+        conclusion_quote: "“Because I came to Yung-Ching, I discovered a better self and a vastly bigger world.”",
+        conclusion_sub: "Partnering with parents, empowering each student, and marching forward across six dimensions.",
+        footer_about: "Chiayi County Yung Ching Senior High School<br>6-Year Secondary Comprehensive School | Global Vision, Local Care, Forward-Looking Innovation, Holistic Education",
+        footer_info_t: "Contact Information",
+        footer_addr: "Address: No. 1, Xinyi 2nd Rd., Taibao City, Chiayi County 61248, Taiwan",
+        footer_traffic: "Transit: Adjacent to THSR Chiayi Station & Southern Branch of National Palace Museum",
+        footer_pillars_t: "Six Strategic Pillars"
+      },
+      zh: {
+        school_title: "嘉義縣立永慶高級中學",
+        footer_school_name: "嘉義縣立永慶高級中學",
+        nav_subheading: "Chiayi County Yung Ching High School",
+        nav_school_badge: "品牌永慶・標配未來 2.0",
+        nav_vision: "辦學願景",
+        nav_six_pillars: "六大面向 2.0",
+        nav_highlights: "卓越成果",
+        nav_curriculum: "特色班級",
+        nav_steam: "科普與國際",
+        nav_promise: "教育承諾",
+        hero_badge: "嘉義扎根・向世界發光｜六年一貫完整教育",
+        hero_title_prefix: "品牌永慶・標配未來",
+        hero_subtitle: "讓每一個孩子找到自己的舞台，讓每一種天賦都擁有未來。<br class='hidden sm:inline'>融合「雙語、雙科、接國際」，打造全人、前瞻、幸福兼備的卓越學府。",
+        pill_academic: "學術向上",
+        pill_tech: "科技向前",
+        pill_global: "國際向外",
+        pill_sports: "體育向強",
+        pill_arts: "人文向深",
+        pill_happiness: "幸福向內",
+        hero_cta_pillars: "探索六大核心藍圖",
+        hero_cta_achievements: "檢視亮眼成果榜單",
+        stat_1_num: "連續 4 年",
+        stat_1_desc: "大學學測嘉義縣公立高中之冠",
+        stat_2_num: "首位醫科",
+        stat_2_desc: "繁星錄取成大與中醫大醫學系",
+        stat_3_num: "5+ 專利",
+        stat_3_desc: "AI 創新發明與國際世界競賽銀牌",
+        stat_4_num: "27 所+",
+        stat_4_desc: "跨國交流學校與海外姊妹校網絡",
+        vision_quote: "「教育從來不是一場只看眼前成績的競賽，它更像是一場長跑。一所學校最重要的責任，不是要求所有孩子跑在同一條跑道上，而是幫助每一個孩子找到自己的位置，找到一條願意努力走下去的路。」",
+        principal_name: "郭春松",
+        principal_title: "永慶高中 校長",
+        vision_tagline: "融雙語・用雙科・接國際",
+        vision_badge: "辦學沿革與立校理念",
+        vision_heading: "感念回饋・從「特色學校」邁向「卓越品牌」",
+        vision_p1: "永慶高中是嘉義縣政府為感念台塑企業王永慶創辦人興建校舍回饋地方、改善嘉義縣教育環境之恩澤，於 2009 年 8 月 1 日創設之國高中六年一貫完全中學。",
+        vision_p2: "面對新課綱與未來挑戰，我們以「全球視野、在地關懷、創新前瞻、全人教育」為核心，以藝術人文涵養氣質，憑藉科學與科技知能激發跨域思考。進入 115 學年度，我們將所有計畫昇華為三大平衡架構：",
+        balance_1_title: "向上與向內",
+        balance_1_desc: "學術力持續向上拔尖，內在心靈穩健自信有歸屬。",
+        balance_2_title: "向前與向深",
+        balance_2_desc: "科技帶來前瞻速度，人文涵養深度思考與同理溫度。",
+        balance_3_title: "向外與向強",
+        balance_3_desc: "國際接軌拓展格局，運動品格鍛造面對挫折的堅強韌性。",
+        pillars_subtitle: "Six Strategic Directions",
+        pillars_heading: "六個方向・成就一個完整的孩子",
+        pillars_summary: "學術讓孩子站得穩、科技讓孩子走得快、國際讓孩子看得遠、體育讓孩子更堅強、人文讓孩子有溫度、幸福讓孩子找到自己。",
+        p1_title: "學術向上｜資優領航・多元升學",
+        p1_desc: "不只追求高分，更厚植不同潛能學生的知識基底。從高一生涯探索、高二建構多元學習歷程，到高三針對校系特性精準輔導。",
+        p1_bullet1: "成立高中學術性向資優班（數理資優組 / 語文資優組）。",
+        p1_bullet2: "全縣語文競賽狂掃 34 獎項，4 位師生進軍全國賽。",
+        p1_core: "核心：讓孩子站得穩",
+        p2_title: "科技向前｜AI 賦能・半導體接軌",
+        p2_desc: "從工具使用進階至操作、整合與發明創造。以 AI 半導體特色班建立高一至高三完整路徑（Python、電路、PCB設計、AIoT 與 APCS）。",
+        p2_bullet1: "世界青少年發明展銀牌 & Panasonic 特別獎認證。",
+        p2_bullet2: "韓國 WICO 世界創新競賽銀牌；累積獲得 5 件專利。",
+        p2_core: "核心：讓孩子走得快",
+        p3_title: "國際向外｜雙語加值・世界共學",
+        p3_desc: "不只出國，而是讓孩子理解世界與自我的關係。拓展至日本、韓國、加拿大、美、新、以等 27 所學校之跨國網路與姊妹校。",
+        p3_bullet1: "創校首位高三畢業直升加拿大名校西門菲莎大學（SFU）。",
+        p3_bullet2: "青年海外圓夢基金：日本南三陸 15 天防災地方創生共學。",
+        p3_core: "核心：讓孩子看得遠",
+        p4_title: "體育向強｜專業培訓・品格鍛鍊",
+        p4_desc: "「強運動、勤讀書、守紀律、有禮貌」。完備四級培育銜接，獲評教育部體育班績優學校，運動中養成抗壓韌性與時間管理。",
+        p4_bullet1: "全中運奪 2銀7銅佳績；高中五人制足球女組全國亞軍。",
+        p4_bullet2: "國手榮耀：2026 世界盃木球雙金一銅、韓國青年跆拳銅牌。",
+        p4_core: "核心：讓孩子更堅強",
+        p5_title: "人文向深｜藝術涵養・有溫度的人",
+        p5_desc: "科技時代更需人文底蘊。透過音樂、視覺藝術、文學與微電影創作，讓學生理解美的涵義，也學會傾聽與同理他人的心靈。",
+        p5_bullet1: "絲竹室內樂合奏榮獲全國學生音樂比賽團體組「全國特優」！",
+        p5_bullet2: "圓夢微電影《那天以後》：高三生聚焦校園關懷與導演夢。",
+        p5_core: "核心：讓孩子有溫度",
+        p6_title: "幸福向內｜適性揚才・全人陪伴",
+        p6_desc: "六大面向的最核心：讓每個孩子被看見。不強求每個人同個模樣，遇到失敗有人陪、有夢想有人相信，建構具安全感的幸福校園。",
+        p6_bullet1: "融入社區與城市：2026 台灣燈會在嘉義 Team Taiwan 活力展現。",
+        p6_bullet2: "城隍廟與社會善心助學金陪伴，心理輔導與生涯支持無後顧之憂。",
+        p6_core: "核心：讓孩子找到自己",
+        achieve_tag: "Achievements & Milestones",
+        achieve_heading: "突破創校紀錄・升學與競賽全面發光",
+        achieve_desc: "堅持多元入學與個別化輔導，讓不論是頂大醫科、特殊才藝還是海外留學的學生，都能發揮極致潛能。",
+        achieve_card1_title: "繁星與頂大突破",
+        achieve_card1_body: "繁星推薦上榜率卓越，國立大學及醫學大學錄取率突破六成以上，台大、成大、清大、陽明交大、政大均有亮眼席次。",
+        achieve_card1_badge: "歷史新里程碑",
+        achieve_card1_name: "翁少宸 同學",
+        achieve_card1_note: "透過繁星推薦錄取成大與中國醫大醫學系，創下創校首位繁星醫科生紀錄！",
+        achieve_card2_title: "特殊選才大放異彩",
+        achieve_card2_body: "輔導處專業一對一模擬面試與備審指導，橫跨自然科學、法律、資工、生技、社工等多元領域，多年連續斬獲多所指標國立大學。",
+        spec_univ_1: "臺師大數學、海洋/嘉大資工",
+        spec_student_1: "黃丞右、莊詠翔",
+        spec_univ_2: "國北教大自然、東華縱谷書院",
+        spec_student_2: "許怡湘、莊曜餘",
+        spec_univ_3: "中山人社跨域、中正紫荊/運競",
+        spec_student_3: "葉佳偵、吳冠穎",
+        achieve_card3_title: "國際發明與體壇國手",
+        achieve_card3_body: "將科技運用於社會關懷，以體育淬鍊毅力，永慶學子從嘉義在地出發，在國際舞台上發光發熱。",
+        achieve_award1_title: "2026 韓國 WICO 世界創新競賽銀牌",
+        achieve_award1_desc: "官承逸、簡瑞恩、龔義誠－「AI 輔助紅綠燈識別導盲背心」",
+        achieve_award2_title: "2026 世界盃木球錦標賽 雙金一銅",
+        achieve_award2_desc: "林耘蓁 同學披上國家代表隊戰袍登上世界巔峰",
+        feat_subtitle: "Featured Programs",
+        feat_heading: "標配未來的特色培育班級",
+        feat_desc: "永慶高中依照未來產業需求與全球化格局，打造頂尖前瞻課程，為學生奠定進入一流大學與國際職涯的基石。",
+        feat_class1_badge: "114 學年度啟航",
+        feat_class1_title: "高中學術性向資優班",
+        feat_class1_body: "分為「數理資優組」與「語文資優組」。由鑑輔會鑑定安置，提供彈性課程設計、進階專題研究、國際競賽培訓及語言強化，連結大學與企業跨域專案。",
+        feat_class1_b1: "建立資優社群，同儕激勵成長",
+        feat_class1_b2: "與大學研究團隊攜手產學專題研究",
+        feat_class1_target: "招收對象：免試入學 / 直升永慶高中部學生",
+        feat_class2_badge: "校訂必修 8 學分＋三年路徑",
+        feat_class2_title: "AI 半導體特色班",
+        feat_class2_body: "深化 AI+IoT 實力，全面升級半導體領域。高一奠基 Python 與半導體導論；高二深化 AIoT、PCB 與資安；高三獨立研究結合 APCS 大學程式先修培訓。",
+        feat_class2_b1: "邀請淡江大學饒建奇教授指導 APCS 課程",
+        feat_class2_b2: "導入中正機器人基地與台大量子微課程",
+        feat_class2_target: "招收對象：國三應屆畢業生特色甄選",
+        feat_class3_badge: "教育部 2030 雙語政策",
+        feat_class3_title: "雙語實驗班",
+        feat_class3_body: "英文課程全英語授課，並將地球科學、物理、體育、音樂及健康護理融入雙語教學。課後英檢強化，並安排赴海外名校實地參訪與交流。",
+        feat_class3_b1: "新加坡與日本國際教育旅行實境交流",
+        feat_class3_b2: "培育具備跨文化對話的永慶青年大使",
+        feat_class3_target: "招收對象：永慶高中部新生甄選",
+        steam_badge: "典範學校榮譽認證",
+        steam_heading: "向下扎根：帶著科普去旅行",
+        steam_body: "從國中八、九年級的特色彈性課程「科博文探論」（包含 Science Follow Me、神廚 SCIENCE、寰宇大視界），向下扎根探究與實作精神，無縫銜接高中自然科研究。",
+        steam_item1_t: "台灣科普環島列車主力學校",
+        steam_item1_d: "協助國科會辦理科普列車，由永慶高中學生擔綱設計基礎科學貨櫃與偏鄉到校服務。",
+        steam_item2_t: "學區中小學闖關與嘉義科學168",
+        steam_item2_d: "讓科學走出課本，永慶學生用小學生聽得懂的生動語言熱情分享科學魔力。",
+        steam_item3_t: "帶著科普走向世界",
+        steam_item3_d: "結合國際姊妹校互訪，將台灣探究實作的科學亮點推廣至世界各地中學交流。",
+        global_heading: "跨越國界：永慶青年大使與世界共學",
+        global_body: "「走出去，世界就在眼前；走不出去，眼前就是世界。」永慶成立永慶青年大使團（YCYA），獲樸仔腳教育基金會長年認養支持，讓孩子具備全球移動力。",
+        global_box1_t: "日本姊妹校網絡",
+        global_box1_d: "夢前高校、加古川南高校、播磨福崎高校、三條商業高校",
+        global_box2_t: "韓國姊妹校",
+        global_box2_d: "京畿道坡州市文山守億高中",
+        global_box3_t: "在地文化互學",
+        global_box3_d: "與阿里山國中小開展鄒族文化與科學交流營",
+        global_box4_t: "國際多元足跡",
+        global_box4_d: "美、加、以、星、越、烏干達等全球 27 校共學平台",
+        global_quote: "「我來自嘉義、來自臺灣、來自永慶，而我能夠自信地和世界對話！」",
+        promise_tag: "Our Core Promise",
+        promise_heading: "「品牌永慶・標配未來」是一份真誠的教育承諾",
+        promise_subtitle: "我們期盼每一位孩子在永慶的青春時光裡，都能裝備走向世界的堅定底氣：",
+        promise_1_t: "熱忱探索",
+        promise_1_d: "至少找到一件自己真正喜歡、願意投入熱情的事情。",
+        promise_2_t: "目標專注",
+        promise_2_d: "至少擁有一個願意全心以赴、堅持到底的目標。",
+        promise_3_t: "恩師同行",
+        promise_3_d: "至少遇見一位願意深深相信他、耐心陪伴他的老師。",
+        promise_4_t: "榮光自信",
+        promise_4_d: "至少累積一次突破自我、讓自己深感驕傲的學習成果。",
+        conclusion_quote: "「因為來到永慶，我看見了一個更好的自己，也看見了一個更大的世界。」",
+        conclusion_sub: "親師同行，成就孩子；六向並進，共創未來；品牌永慶，從嘉義走向世界。",
+        footer_about: "Chiayi County Yung Ching Senior High School<br>國中、高中六年一貫完全中學｜全球視野、在地關懷、創新前瞻、全人教育",
+        footer_info_t: "學校聯絡資訊",
+        footer_addr: "地址：61248 嘉義縣太保市信義二路 1 號",
+        footer_traffic: "交通：鄰近高鐵嘉義站、國立故宮博物院南部院區",
+        footer_pillars_t: "辦學核心六大面向"
+      },
+      ja: {
+        school_title: "嘉義県立永慶高級中学",
+        footer_school_name: "嘉義県立永慶高級中学",
+        nav_subheading: "Chiayi County Yung Ching High School",
+        nav_school_badge: "ブランド永慶・未来を標準装備 2.0",
+        nav_vision: "教育ビジョン",
+        nav_six_pillars: "6つの柱 2.0",
+        nav_highlights: "卓越した実績",
+        nav_curriculum: "特色ある学科",
+        nav_steam: "科学と国際化",
+        nav_promise: "教育の約束",
+        hero_badge: "嘉義に根ざし、世界へ羽ばたく｜中高一貫6年教育",
+        hero_title_prefix: "ブランド永慶・未来を標準装備",
+        hero_subtitle: "すべての子どもに自己表現の舞台を、すべての才能に輝かしい未来を。<br class='hidden sm:inline'>「バイリンガル・科学技術・国際連携」を融合し、人間性と先端性を兼ね備えた教育を創造します。",
+        pill_academic: "学力向上",
+        pill_tech: "技術革新",
+        pill_global: "国際展開",
+        pill_sports: "体育精神",
+        pill_arts: "人文教養",
+        pill_happiness: "心の幸福",
+        hero_cta_pillars: "6大戦略の青写真を見る",
+        hero_cta_achievements: "栄誉と進学実績",
+        stat_1_num: "4年連続",
+        stat_1_desc: "大学学力測定試験で嘉義県公立高校第1位を維持",
+        stat_2_num: "初の医学部",
+        stat_2_desc: "繁星推薦で成功大学および中国医薬大医学部に合格",
+        stat_3_num: "5件+ 特許",
+        stat_3_desc: "AI発明や国際青少年イノベーション展で銀メダル受賞",
+        stat_4_num: "27校以上",
+        stat_4_desc: "世界各国の提携校・海外姉妹校ネットワーク",
+        vision_quote: "「教育は目の前の点数だけを競う短距離走ではなく、長距離マラソンです。学校の最も重要な使命は、全員に同じレーンを走らせることではなく、一人ひとりが自分の立ち位置と歩むべき道を見つける手助けをすることです。」",
+        principal_name: "郭春松",
+        principal_title: "永慶高級中学 校長",
+        vision_tagline: "バイリンガル・デュアルサイエンス・国際接続",
+        vision_badge: "創立の精神と理念",
+        vision_heading: "恩恵への感謝から「特色校」を経て「卓越ブランド」へ",
+        vision_p1: "永慶高校は、台湾プラスチックグループ創業者・王永慶氏の校舎寄贈と地域教育向上への貢献に感謝し、2009年8月1日に嘉義県政府によって創設された中高一貫校です。",
+        vision_p2: "「世界的視野、地域貢献、先進的革新、全人教育」を核とし、芸術人文で感性を育み、科学技術で学際的思考を刺激します。115学年度より、3つの調和的バランスを軸に進化を遂げています：",
+        balance_1_title: "向上と内面性",
+        balance_1_desc: "学力を高めつつ、内面の安定感と自己肯定感を育む。",
+        balance_2_title: "前進と深み",
+        balance_2_desc: "最先端技術を追求しながら、人文学の共感と思考の深さを養う。",
+        balance_3_title: "外向と強靭さ",
+        balance_3_desc: "国際的な視野を広げ、スポーツを通じて挫折に負けない精神力を鍛える。",
+        pillars_subtitle: "Six Strategic Directions",
+        pillars_heading: "6つの方向性・全人としての子どもの育成",
+        pillars_summary: "学力は確かな足場を、科学技術は歩みの速さを、国際教育は広い視野を、体育は強い心を、人文は温もりを、そして幸福は自己の発見をもたらします。",
+        p1_title: "学術向上｜エリート指導・多元的な進学支援",
+        p1_desc: "点数の追求にとどまらず、個々の適性に合わせた基盤を構築。高1の進路探究から、高2のポートフォリオ、高3の志望校別個別指導まで体系化しています。",
+        p1_bullet1: "高校学術資優クラス（数理資優組／語文資優組）を新設。",
+        p1_bullet2: "県語文コンテストで34の賞を受賞、4名が全国大会へ進出。",
+        p1_core: "核心：確かな足場を築く",
+        p2_title: "技術前進｜AI主導・半導体産業との架け橋",
+        p2_desc: "単なる利用にとどまらず、創造と開発の力を養う。AI半導体特別クラスで3年間の体系的なカリキュラム（Python、電子回路、AIoT、APCS）を展開。",
+        p2_bullet1: "世界青少年発明展（IEYI）銀メダルおよびパナソニック特別賞受賞。",
+        p2_bullet2: "韓国WICO世界発明大会で銀メダル；累計5件の特許を取得。",
+        p2_core: "核心：未来へ速く進む",
+        p3_title: "国際向外｜バイリンガル推進・地球市民としての共学",
+        p3_desc: "ただ海外へ行くだけでなく、世界と自分との関係を理解する。日本、韓国、カナダ、アメリカ、シンガポールなど27校のネットワーク。",
+        p3_bullet1: "創校以来初、高校卒業からカナダの名門サイモンフレーザー大学（SFU）へ進学。",
+        p3_bullet2: "海外研修基金：宮城県南三陸町での15日間にわたる防災・地方創生研修。",
+        p3_core: "核心：遠くまで見晴らす",
+        p4_title: "体育向強｜専門的トレーニング・人格と規律の形成",
+        p4_desc: "「文武両道・礼節重視・強い精神力」。教育部体育班優秀校に選定され、スポーツを通じてタイムマネジメントと逆境に強い心を鍛えます。",
+        p4_bullet1: "全国中学高校体育大会で2銀7銅；高校女子フットサル全国準優勝。",
+        p4_bullet2: "代表選手の快挙：2026年ウッドボールW杯で2金1銅、韓国テコンドー銅メダル。",
+        p4_core: "核心：たくましく立ち向かう",
+        p5_title: "人文向深｜芸術的感性・温もりのある人間性の涵養",
+        p5_desc: "科学技術の時代だからこそ人文が不可欠。室内楽、美術、文学、映像制作を通じて、美の真髄を学び、他者の心に寄り添う力を培います。",
+        p5_bullet1: "絲竹室内楽合奏が全国学生音楽コンクールで「全国特優」を受賞！",
+        p5_bullet2: "高校生自主映画『あの日から』：いじめ問題と映画監督の夢を描いた秀作。",
+        p5_core: "核心：心に温もりを持つ",
+        p6_title: "幸福向内｜個性の開花・生涯に寄り添う伴走",
+        p6_desc: "6大方針の核心：すべての子どもが存在を認められること。型にはめず、挫折した時は寄り添い、夢がある時は信じる安全な学校環境を作ります。",
+        p6_bullet1: "地域と共創：2026台湾ランタンフェスティバルin嘉義でのTeam Taiwan参加。",
+        p6_bullet2: "地域寺院や社会からの手厚い奨学金、心理ケアと進路支援で安心の学びを提供。",
+        p6_core: "核心：自分自身を見出す",
+        achieve_tag: "Achievements & Milestones",
+        achieve_heading: "創立記録を更新・進学とコンクールで目覚ましい飛躍",
+        achieve_desc: "多角的な入試制度と個別指導を徹底し、トップ大学医学部、芸術スポーツ、海外留学など生徒の可能性を最大限に引き出します。",
+        achieve_card1_title: "繁星推薦と最難関大学の突破",
+        achieve_card1_body: "国公立大学および医科大学合格率が6割を超え、台湾大学、成功大学、清華大学、陽明交通大学、政治大学などに多数合格。",
+        achieve_card1_badge: "歴史的マイルストーン",
+        achieve_card1_name: "翁少宸 さん",
+        achieve_card1_note: "繁星推薦制度により国立成功大学医学部および中国医薬大医学部に現役合格！",
+        achieve_card2_title: "特別選抜（特色入試）の目覚ましい成果",
+        achieve_card2_body: "個別面接指導と綿密な書類対策により、自然科学、情報、法学、福祉など多彩な分野で難関国立大に多数合格者を輩出。",
+        spec_univ_1: "台湾師範大数学、海洋大/嘉義大情報工学",
+        spec_student_1: "黄丞右、莊詠翔",
+        spec_univ_2: "台北教育大自然科学、東華大文理総合",
+        spec_student_2: "許怡湘、莊曜餘",
+        spec_univ_3: "中山大学際、中正大文理/競技スポーツ",
+        spec_student_3: "葉佳偵、吳冠穎",
+        achieve_card3_title: "世界発明大会の栄誉と台湾代表アスリート",
+        achieve_card3_body: "社会貢献のためのテクノロジー応用と、スポーツで培った不屈の闘志で世界へ挑戦しています。",
+        achieve_award1_title: "2026 韓国 WICO 世界発明大会 銀メダル",
+        achieve_award1_desc: "「視覚障害者のためのAI信号認識ベスト」官承逸、簡瑞恩、龔義誠",
+        achieve_award2_title: "2026 ウッドボール世界選手権 2金1銅",
+        achieve_award2_desc: "林耘蓁さんが台湾代表として世界の頂点に輝きました",
+        feat_subtitle: "Featured Programs",
+        feat_heading: "未来に直結する特色ある専門クラス",
+        feat_desc: "次世代の産業と国際化ニーズを見据えた先進的カリキュラムで、国内外の大学進学とキャリア形成の基盤を築きます。",
+        feat_class1_badge: "114学年度スタート",
+        feat_class1_title: "高校学術資優クラス（ギフテッド）",
+        feat_class1_body: "「数理資優」と「語文資優」の2コース。教育鑑定に基づき、柔軟なカリキュラム、高度な課題研究、国際大会対策、大学研究室との連携を実施。",
+        feat_class1_b1: "志を共にする仲間が集う切磋琢磨のコミュニティ",
+        feat_class1_b2: "大学の研究室と連携した産学協同プロジェクト",
+        feat_class1_target: "対象：高校推薦・一般入試による新入生（選考あり）",
+        feat_class2_badge: "校内必修8単位＋3年間一貫コース",
+        feat_class2_title: "AI・半導体特色クラス",
+        feat_class2_body: "高1でPythonと半導体概論を習得、高2でAIoT・電子回路設計・セキュリティを探究、高3で独自研究とAPCS大学プログラミング先修検定を対策。",
+        feat_class2_b1: "淡江大学の饒建奇教授による本格的なAPCS講座",
+        feat_class2_b2: "中正大学ロボット拠点や台湾大学の量子マイクロスモール講座",
+        feat_class2_target: "対象：中学3年生を対象とした特色選抜枠",
+        feat_class3_badge: "教育部2030バイリンガル政策推進",
+        feat_class3_title: "バイリンガル実験クラス",
+        feat_class3_body: "英語授業のオールイングリッシュ化に加え、地学・物理・体育・音楽・保健体育でのバイリンガル授業。シンガポールや日本への海外研修を実施。",
+        feat_class3_b1: "シンガポールや日本の大学・高校での実地フィールドワーク",
+        feat_class3_b2: "異文化理解と発信力を持つユースアンバサダーの育成",
+        feat_class3_target: "対象：永慶高校部新入生（選抜制）",
+        steam_badge: "模範校（典範学校）認定",
+        steam_heading: "地域に根ざす：サイエンスと共に旅をする",
+        steam_body: "中学2・3年生対象の特色ある探究プログラム「科博文探論」（Science Follow Me、神廚SCIENCE、寰宇大視界）により、体験を通じた科学リテラシーを早期に育成。",
+        steam_item1_t: "台湾科学巡回トレインの主力拠点校",
+        steam_item1_d: "国家科学及技術委員会と協力し、基礎科学コンテナの設計や遠隔地小中学校への出張実験教室を担当。",
+        steam_item2_t: "地域小中学生向けサイエンスラリーと嘉義科学168",
+        steam_item2_d: "教科書を飛び出し、子どもたちに分かりやすい言葉で科学の面白さを届けます。",
+        steam_item3_t: "科学を携えて世界へ",
+        steam_item3_d: "海外姉妹校との交流において、台湾の理科実験プログラムを英語で実演紹介。",
+        global_heading: "国境を越えて：ユースアンバサダーの世界共学",
+        global_body: "「一歩踏み出せば世界が目の前に広がる。」永慶ユースアンバサダー団（YCYA）は基金会の支援を受け、世界27校以上の学びのネットワークを構築しています。",
+        global_box1_t: "日本の姉妹校・提携校",
+        global_box1_d: "兵庫県立夢前高校、加古川南高校、播磨福崎高校、新潟県立三条商業高校",
+        global_box2_t: "韓国の姉妹校",
+        global_box2_d: "京畿道坡州市 文山守億高校",
+        global_box3_t: "先住民族文化との交流",
+        global_box3_d: "阿里山小中とのツォウ族伝統文化・科学交流キャンプ",
+        global_box4_t: "グローバルな足跡",
+        global_box4_d: "米・加・イスラエル・シンガポール・ウガンダなど27校の連携",
+        global_quote: "「私は嘉義の、台湾の、永慶の生徒として、自信を持って世界と対話できる！」",
+        promise_tag: "Our Core Promise",
+        promise_heading: "「ブランド永慶・未来を標準装備」という真摯な誓い",
+        promise_subtitle: "永慶での青春時代を通じ、すべての子どもが世界へ羽ばたく自信と確信を持てるように：",
+        promise_1_t: "情熱の発見",
+        promise_1_d: "心から好きになり、情熱を注ぎ続けられる何かを少なくとも1つ見つけること。",
+        promise_2_t: "目標への専心",
+        promise_2_d: "最後まで全力を尽くしてやり抜きたいと思える目標を少なくとも1つ持つこと。",
+        promise_3_t: "恩師との出会い",
+        promise_3_d: "どんな時も深く信じ、温かく寄り添ってくれる先生に少なくとも1人出会うこと。",
+        promise_4_t: "誇りある成長",
+        promise_4_d: "自分自身の限界を突破し、誇らしく思える学びの経験を少なくとも1度積み重ねること。",
+        conclusion_quote: "「永慶に来たからこそ、より素晴らしい自分に出会い、より広い世界を見ることができた。」",
+        conclusion_sub: "保護者と教師が手を取り合い、6つの柱と共に嘉義から世界へ羽ばたきます。",
+        footer_about: "Chiayi County Yung Ching Senior High School<br>中高一貫6年制完全中学｜世界的視野・地域貢献・革新前瞻・全人教育",
+        footer_info_t: "学校情報",
+        footer_addr: "所在地：台湾 嘉義県太保市信義二路1号 (〒61248)",
+        footer_traffic: "アクセス：台湾新幹線（高鐵）嘉義駅・国立故宮博物院南部院区に隣接",
+        footer_pillars_t: "教育の6大方針"
+      },
+      ko: {
+        school_title: "자이현립 영경고급중학",
+        footer_school_name: "자이현립 영경고급중학",
+        nav_subheading: "Chiayi County Yung Ching High School",
+        nav_school_badge: "브랜드 영경・미래 표준 장착 2.0",
+        nav_vision: "교육 비전",
+        nav_six_pillars: "6대 핵심 영역 2.0",
+        nav_highlights: "탁월한 성과",
+        nav_curriculum: "특성화 학급",
+        nav_steam: "과학과 국제교류",
+        nav_promise: "교육의 약속",
+        hero_badge: "자이에 뿌리내려 세계로 도약｜중·고교 6년 일관 완전교육",
+        hero_title_prefix: "브랜드 영경・미래 표준 장착",
+        hero_subtitle: "모든 학생이 자신만의 무대를 찾고, 모든 재능이 미래를 갖도록 지원합니다.<br class='hidden sm:inline'>'이중언어·과학기술·국제연계'를 융합하여 전인격적이고 미래지향적인 행복한 명문 배움터를 조성합니다.",
+        pill_academic: "학술 향상",
+        pill_tech: "기술 전진",
+        pill_global: "글로벌 확장",
+        pill_sports: "체육 강인",
+        pill_arts: "인문 심화",
+        pill_happiness: "내면 행복",
+        hero_cta_pillars: "6대 전략 청사진 탐색",
+        hero_cta_achievements: "우수 성과 및 명예 보기",
+        stat_1_num: "4년 연속",
+        stat_1_desc: "대만 대학수능 자이현 공립고등학교 1위 수성",
+        stat_2_num: "최초 의대 합격",
+        stat_2_desc: "번성추천전형 국립성공대 및 중국의약대 의예과 합격",
+        stat_3_num: "5건+ 특허",
+        stat_3_desc: "AI 혁신 발명 및 국제발명전시회 은메달 수상",
+        stat_4_num: "27개교+",
+        stat_4_desc: "글로벌 교류 학교 및 해외 자매결연 네트워크",
+        vision_quote: "“교육은 결코 눈앞의 성적만을 따지는 단거리 경주가 아닙니다. 장거리 마라톤과 같습니다. 학교의 가장重要な責任은 모든 아이에게 같은 레일을 달리도록 강요하는 것이 아니라, 각자 자신의 자리를 찾고 기꺼이 걸어갈 길을 찾도록 돕는 것입니다.”",
+        principal_name: "궈춘쑹 (郭春松)",
+        principal_title: "영경고등학교 교장",
+        vision_tagline: "이중언어 융합・과학기술 활용・글로벌 연계",
+        vision_badge: "설립 연혁 및 교육 철학",
+        vision_heading: "지역 보은에서 시작해 '특성화 학교'를 넘어 '탁월한 브랜드'로",
+        vision_p1: "영경고등학교는 포모사 플라스틱 그룹 왕영경 창립자의 교사 기증 및 자이현 교육환경 개선 헌신에 감사하여, 자이현 정부가 2009년 8월 1일 설립한 중·고교 6년 일관 완전중학교입니다.",
+        vision_p2: "새로운 12년 국민기본교육과 미래 도전에 부응하여 '글로벌 시야, 지역사회 배려, 혁신과 선도, 전인 교육'을 핵심 가치로 삼고 있습니다. 115학년도를 맞아 모든 계획을 3대 균형 구조로 승화시켰습니다:",
+        balance_1_title: "상승과 내면의 조화",
+        balance_1_desc: "학업 역량을 높이는 동시에 내면의 자존감과 안정감을 견고히 합니다.",
+        balance_2_title: "전진과 심화의 조화",
+        balance_2_desc: "첨단 과학기술로 앞서가고 인문학적 소양으로 깊은 공감 능력을 기릅니다.",
+        balance_3_title: "확장과 강인함의 조화",
+        balance_3_desc: "세계와 교류하며 시야를 넓히고 스포츠 정신으로 회복탄력성을 단련합니다.",
+        pillars_subtitle: "Six Strategic Directions",
+        pillars_heading: "6가지 방향・온전한 한 사람으로의 성장",
+        pillars_summary: "학술은 굳건한 디딤돌이 되고, 기술은 빠른 발걸음을 주며, 국제교육은 넓은 시야를 열어주고, 체육은 강인함을 기르며, 인문은 따뜻한 온도를 더하고, 행복은 참된 자신을 발견하게 합니다.",
+        p1_title: "학술 향상｜영재 교육 선도・다양한 진학 지원",
+        p1_desc: "점수만을 추구하지 않고 학생들의 지적 역량을 탄탄히 다집니다. 고1 진로 탐색, 고2 학생부 포트폴리오 구축, 고3 맞춤형 입시 지도 체계를 완비했습니다.",
+        p1_bullet1: "고교 학술영재반 신설 (수리과학영재반 / 어문영재반).",
+        p1_bullet2: "자이현 어문경시대회 34개 부문 석권, 4명 전국대회 대표 진출.",
+        p1_core: "핵심: 굳건히 서는 배움",
+        p2_title: "기술 전진｜AI 역량 강화・반도체 인재 육성",
+        p2_desc: "단순 도구 활용을 넘어 시스템 통합 및 발명·창조 단계로 나아갑니다. AI 반도체 특성화 학급을 통해 3개년 체계적 로드맵(Python, 회로, PCB, AIoT, APCS)을 운영합니다.",
+        p2_bullet1: "세계청소년발명전시회(IEYI) 은메달 및 파나소닉 특별상 수상.",
+        p2_bullet2: "대한민국 WICO 세계발명창의올림피아드 은메달, 누적 특허 5건 취득.",
+        p2_core: "핵심: 미래를 향한 빠른 전진",
+        p3_title: "글로벌 확장｜이중언어 역량・세계와의 공학",
+        p3_desc: "단순 해외 출국이 아닌 세계와 나의 관계를 성찰하는 교육입니다. 일본, 한국, 캐나다, 미국, 싱가포르 등 27개 글로벌 파트너교 네트워크를 구축했습니다.",
+        p3_bullet1: "개교 이래 최초로 고교 졸업 후 캐나다 명문 사이먼프레이저대학교(SFU) 직행 입학.",
+        p3_bullet2: "청년 해외드림펀드: 일본 미나미산리쿠 15일간 방재·지역재생 심층 연수.",
+        p3_core: "핵심: 세계를 바라보는 넓은 시야",
+        p4_title: "체육 강인｜전문 육성・인격과 규율 훈련",
+        p4_desc: "'체력 증진, 성실한 학업, 규율 준수, 예의범절'. 교육부 우수 체육중점학교로 선정되었으며, 운동을 통해 역경을 이겨내는 회복탄력성을 배양합니다.",
+        p4_bullet1: "전국중고체육대회 은2·동7 획득; 전국 고등부 여자 풋살 준우승.",
+        p4_bullet2: "국가대표 활약: 2026 우드볼 월드컵 2관왕·동1, 한국 춘천 태권도오픈 동메달.",
+        p4_core: "핵심: 흔들리지 않는 강인함",
+        p5_title: "인문 심화｜예술적 감성・따뜻한 인재 육성",
+        p5_desc: "기술의 시대일수록 인문학적 온기가 중요합니다. 기악 합주, 미술, 문학, 단편영화 제작을 통해 아름다움을 이해하고 타인에게 공감하는 인격을 함양합니다.",
+        p5_bullet1: "사죽(絲竹) 실내악 합주, 대만 전국학생음악콩쿠르 단체전 최고상 '전국특우(全國特優)' 수상!",
+        p5_bullet2: "드림 단편영화 《그날 이후》: 고3 학생이 학교폭력 예방을 주제로 감독의 꿈 실현.",
+        p5_core: "핵심: 타인을 향한 따뜻한 온기",
+        p6_title: "내면 행복｜맞춤형 잠재력 발현・전인적 동행",
+        p6_desc: "6대 영역의 가장 본질적인 핵심: 한 명 한 명이 존중받는 학교. 모든 아이를 틀에 맞추지 않고, 실패할 때 곁을 지키며 꿈을 응원하는 안전한 배움터입니다.",
+        p6_bullet1: "지역사회 연계: 2026 대만 등불축제(자이) Team Taiwan 열정적 참여.",
+        p6_bullet2: "지역 자선재단 장학금 연계 및 종합 상담 체계로 걱정 없는 학업 지원.",
+        p6_core: "핵심: 참된 자아의 발견",
+        achieve_tag: "Achievements & Milestones",
+        achieve_heading: "개교 기록 경신・진학과 각종 대회에서의 눈부신 결실",
+        achieve_desc: "다양한 대입 전형과 1:1 맞춤형 진로 지도를 통해 최상위권 의대 진학부터 특기 적성, 해외 유학까지 학생의 잠재력을 꽃피웁니다.",
+        achieve_card1_title: "번성추천전형 및 최상위 명문대 도약",
+        achieve_card1_body: "국공립대 및 의과대학 합격률 60% 이상을 달성하며 대만대, 성공대, 청화대, 양명교통대, 정치대 등 명문대 합격자를 대거 배출했습니다.",
+        achieve_card1_badge: "역사적 마일스톤",
+        achieve_card1_name: "웡샤오천 (翁少宸) 학생",
+        achieve_card1_note: "번성추천전형을 통해 국립성공대 및 중국의약대 의예과 동시 합격! 개교 이래 최초 번성 의대생 배출!",
+        achieve_card2_title: "특수선재(학생부종합) 전형의 쾌거",
+        achieve_card2_body: "진로상담실의 모의 면접과 1:1 서류 컨설팅을 통해 자연과학, 법학, 컴퓨터공학, 생명공학, 사회복지 등 다양한 분야에서 국공립대에 대거 합격했습니다.",
+        spec_univ_1: "대만사범대 수학, 해양대/자이대 컴공",
+        spec_student_1: "황청유, 좡융샹",
+        spec_univ_2: "타이베이교육대 자연과학, 동화대 종곡서원",
+        spec_student_2: "쉬이샹, 좡야오위",
+        spec_univ_3: "중산대 인문과학, 중정대 자형/경기지도",
+        spec_student_3: "예자전, 우관잉",
+        achieve_card3_title: "국제 발명대회 및 국가대표 선수 활약",
+        achieve_card3_body: "사회적 약자를 위한 따뜻한 과학기술과 스포츠로 다진 끈기로 전 세계 무대에서 활약하고 있습니다.",
+        achieve_award1_title: "2026 대한민국 WICO 세계발명창의대회 은메달",
+        achieve_award1_desc: "시각장애인을 위한 AI 보행신호 인식 조끼 (관청이, 젠루이언, 공이청)",
+        achieve_award2_title: "2026 우드볼 세계선수권 2관왕 및 동메달",
+        achieve_award2_desc: "린윈전 학생이 대만 국가대표로 출전하여 세계 정상 등극",
+        feat_subtitle: "Featured Programs",
+        feat_heading: "미래를 표준 장비로 갖춘 특성화 인재반",
+        feat_desc: "영경고등학교는 차세대 첨단 산업 수요와 세계화 추세에 발맞추어 일류 대학 진학과 글로벌 커리어의 발판이 되는 교육과정을 제공합니다.",
+        feat_class1_badge: "114학년도 출범",
+        feat_class1_title: "고등학교 학술영재반 (기프티드)",
+        feat_class1_body: "수리과학영재반과 어문영재반으로 나뉩니다. 유연한 교육과정, 심화 과제연구, 국제대회 훈련, 대학 및 연구기관과의 산학 프로젝트를 운영합니다.",
+        feat_class1_b1: "지적 호기심을 공유하는 동료 학습 커뮤니티",
+        feat_class1_b2: "대학 연구팀과의 긴밀한 공동 탐구 프로젝트",
+        feat_class1_target: "모집 대상: 영경고등학교 고등부 신입생 선발 전형",
+        feat_class2_badge: "교내 필수 8학점 + 3개년 체계적 코스",
+        feat_class2_title: "AI & 반도체 특성화반",
+        feat_class2_body: "고1 파이썬 프로그래밍과 반도체 개론, 고2 AIoT 및 전자회로 설계·보안 심화, 고3 독립연구 및 APCS(대학 프로그래밍 선이수 평가) 대비로 연계됩니다.",
+        feat_class2_b1: "담강대학교 라오젠치(饒建奇) 교수의 직강 APCS 과정",
+        feat_class2_b2: "국립중정대 로봇제작기지 및 국립대만대 양자 마이크로 강좌 도입",
+        feat_class2_target: "모집 대상: 중학교 3학년 졸업생 대상 특성화 전형",
+        feat_class3_badge: "대만 교육부 2030 이중언어 정책 추진",
+        feat_class3_title: "이중언어 실험학급",
+        feat_class3_body: "영어 수업 전면 영어 진행은 물론, 지구과학, 물리, 체육, 음악, 보건 교과에 이중언어 교육을 도입했습니다. 싱가포르 및 일본 해외 연수를 실시합니다.",
+        feat_class3_b1: "싱가포르 및 일본 명문 학교·대학 현지 몰입 연수",
+        feat_class3_b2: "다문화 소통 능력을 갖춘 영경 청년대사 육성",
+        feat_class3_target: "모집 대상: 영경고등학교 신입생 선발",
+        steam_badge: "모범 학교(전범학교) 인증",
+        steam_heading: "뿌리 깊은 과학: 과학과 함께 떠나는 여행",
+        steam_body: "중학교 2·3학년의 특성화 탐구 과정인 '과박문탐론(科博文探論)'(Science Follow Me, 셰프 SCIENCE, 환우대시계)을 통해 고등학교 연구 과정으로 원활히 연계됩니다.",
+        steam_item1_t: "대만 과학순회열차(科普列車) 주관 거점교",
+        steam_item1_d: "국가과학기술위원회와 협력하여 과학 체험 컨테이너 설계 및 소외지역 방문 실험 교실 운영.",
+        steam_item2_t: "초·중학교 과학체험 부스 및 자이 과학168 페스티벌",
+        steam_item2_d: "교과서를 넘어 어린이들이 쉽게 이해할 수 있는 언어로 과학의 즐거움을 전파합니다.",
+        steam_item3_t: "과학을 품고 세계로",
+        steam_item3_d: "해외 자매결연 학교 방문 시 대만의 탐구실습 과학 프로그램을 영어로 시연·교류.",
+        global_heading: "국경을 넘어: 영경 청년대사와 세계의 공학",
+        global_body: "“밖으로 걸어 나가면 세계가 눈앞에 펼쳐지지만, 나아가지 않으면 눈앞이 세계의 전부가 됩니다.” 영경 청년대사단(YCYA)은 글로벌 시민 역량을 체득하고 있습니다.",
+        global_box1_t: "일본 자매결연 네트워크",
+        global_box1_d: "효고현립 유메사키고, 가코가와미나미고, 하리마후쿠사키고, 니가타현립 산조상업고",
+        global_box2_t: "대한민국 자매결연 학교",
+        global_box2_d: "경기도 파주시 문산수억고등학교",
+        global_box3_t: "원주민 문화 상호 배움",
+        global_box3_d: "알리산 초·중학교와 함께하는 츠오우족 전통문화 및 과학 캠프",
+        global_box4_t: "글로벌 협력 발자취",
+        global_box4_d: "미국, 캐나다, 이스라엘, 싱가포르, 베트남, 우간다 등 전 세계 27개교 교류",
+        global_quote: "“나는 자이, 대만, 영경에서 왔으며, 세계와 당당하게 대화할 수 있습니다!”",
+        promise_tag: "Our Core Promise",
+        promise_heading: "‘브랜드 영경・미래 표준 장착’은 진심 어린 교육의 약속입니다",
+        promise_subtitle: "영경에서 보내는 6년의 청춘 동안, 모든 학생이 세상으로 나아갈 수 있는 든든한 저력을 갖추길 바랍니다:",
+        promise_1_t: "열정적 탐색",
+        promise_1_d: "자신이 진정으로 좋아하고 몰입할 수 있는 분야를 적어도 하나 찾을 것.",
+        promise_2_t: "목표를 향한 집중",
+        promise_2_d: "끝까지 온 힘을 다해 완수하고 싶은 목표를 적어도 하나 가질 것.",
+        promise_3_t: "참된 스승과의 동행",
+        promise_3_d: "어떤 순간에도 자신을 굳게 믿고 기다려주는 은사를 적어도 한 분 만날 것.",
+        promise_4_t: "자부심 넘치는 성취",
+        promise_4_d: "스스로 한계를 뛰어넘어 깊은 긍지를 느낄 수 있는 배움의 결실을 적어도 한 번 이룰 것.",
+        conclusion_quote: "“영경에 왔기에 더 나은 나를 만났고, 더 넓은 세상을 보게 되었습니다.”",
+        conclusion_sub: "학부모와 교사가 함께 아이를 세우고, 6대 축으로 미래를 열어갑니다.",
+        footer_about: "Chiayi County Yung Ching Senior High School<br>중·고교 6년 일관 완전중학교｜글로벌 시야·지역사회 배려·혁신 선도·전인 교육",
+        footer_info_t: "학교 연락처 안내",
+        footer_addr: "주소: 대만 자이현 타이바오시 신이2로 1호 (우편번호 61248)",
+        footer_traffic: "교통: 대만 고속철도(THSR) 자이역 및 국립고궁박물원 남부분원 인접",
+        footer_pillars_t: "학교 발전 6대 핵심 영역"
+      }
+    };
+
+    // Safe storage wrapper for Google Apps Script iframe sandbox
+    function getStoredLang() {
+      try {
+        return localStorage.getItem('ycsh_lang') || 'en';
+      } catch (e) {
+        return 'en';
+      }
+    }
+
+    function setStoredLang(lang) {
+      try {
+        localStorage.setItem('ycsh_lang', lang);
+      } catch (e) {
+        // Fallback for sandboxed iframe without throwing
+      }
+    }
+
+    // Default language is English (or URL parameter / GAS initialLang)
+    let currentLang = 'en';
+    try {
+      // 支援網址傳入 ?lang=zh 或是 GAS 範本傳遞
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlLang = urlParams.get('lang');
+      if (urlLang && i18nData[urlLang.toLowerCase()]) {
+        currentLang = urlLang.toLowerCase();
+      } else {
+        currentLang = getStoredLang() || 'en';
+      }
+    } catch(err) {
+      currentLang = 'en';
+    }
+
+    function setLanguage(lang) {
+      if (!i18nData[lang]) return;
+      currentLang = lang;
+      setStoredLang(lang);
+
+      // Update HTML lang attribute
+      const langAttrs = { zh: 'zh-Hant', en: 'en', ja: 'ja', ko: 'ko' };
+      document.documentElement.lang = langAttrs[lang] || 'en';
+
+      // Update prominent labels
+      const langNames = { en: 'English', zh: '繁體中文', ja: '日本語', ko: '한국어' };
+      const shortCodes = { en: 'EN', zh: '中', ja: '日', ko: '韓' };
+      
+      const desktopLabel = document.getElementById('currentLangLabel');
+      if (desktopLabel) desktopLabel.innerText = langNames[lang] || 'English';
+
+      const mobileLabel = document.getElementById('mobileLangLabel');
+      if (mobileLabel) mobileLabel.innerText = shortCodes[lang] || 'EN';
+
+      // Update all DOM elements with data-i18n
+      const elements = document.querySelectorAll('[data-i18n]');
+      elements.forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (i18nData[lang] && i18nData[lang][key] !== undefined) {
+          el.innerHTML = i18nData[lang][key];
+        }
+      });
+
+      // Update active state in desktop dropdown
+      document.querySelectorAll('.lang-item').forEach(btn => {
+        btn.classList.remove('active', 'text-white', 'bg-brand-600');
+        const text = btn.innerText.trim();
+        if (
+          (lang === 'en' && text.includes('English')) ||
+          (lang === 'zh' && text.includes('繁體中文')) ||
+          (lang === 'ja' && text.includes('日本語')) ||
+          (lang === 'ko' && text.includes('한국어'))
+        ) {
+          btn.classList.add('active');
+        }
+      });
+
+      lucide.createIcons();
+    }
+
+    // DOM ready initialization
+    document.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      // Ensure initial language is set to English (or URL parameter / stored)
+      setLanguage(currentLang || 'en');
+      initLogoFallback('mainSchoolLogo', 'headerShieldSvg');
+      initLogoFallback('footerSchoolLogo', 'footerShieldSvg');
+    });
+
+    // Mobile Navbar Toggle logic
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const mobileMenu = document.getElementById('mobileMenu');
+    const mobileNavLinks = document.querySelectorAll('.mobile-nav-link');
+
+    if (mobileMenuBtn && mobileMenu) {
+      mobileMenuBtn.addEventListener('click', () => {
+        mobileMenu.classList.toggle('hidden');
+      });
+
+      mobileNavLinks.forEach(link => {
+        link.addEventListener('click', () => {
+          mobileMenu.classList.add('hidden');
+        });
+      });
+    }
+
+    // Navbar Scroll Shadow elevation
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 20) {
+        navbar.classList.add('shadow-md');
+        navbar.classList.remove('shadow-sm');
+      } else {
+        navbar.classList.remove('shadow-md');
+        navbar.classList.add('shadow-sm');
+      }
+    });
+  </script>
+</body>
+</html>
